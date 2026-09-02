@@ -1,0 +1,42 @@
+name: Refresh Steptember data
+
+on:
+  schedule:
+    # Every six hours. Steptember totals move a few times a day at most.
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+# Never let two refreshes race each other onto the same branch.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # The script leaves committed figures untouched for any team it cannot
+      # read, and only fails the job if every team was unreachable.
+      - name: Scrape the team pages
+        run: node scripts/fetch-steptember.mjs
+
+      - name: Commit any changes
+        run: |
+          if git diff --quiet -- data/; then
+            echo "No change in the numbers — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "Refresh Steptember figures"
+          git push

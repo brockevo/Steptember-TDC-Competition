@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TDC Steptember Challenge — three teams, two challenges</title>
+    <meta
+      name="description"
+      content="Live head-to-head scoreboard for three TDC Steptember teams: most steps and most raised by 30 September 2026."
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%9F%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <p class="eyebrow" id="campaign-window">1–30 September 2026</p>
+        <h1 id="campaign-title">TDC Steptember Challenge</h1>
+        <p class="hero-sub" id="campaign-blurb">
+          Three teams. Two challenges. One month. Most steps and most raised by 30 September wins.
+        </p>
+        <dl class="hero-stats" id="hero-stats"></dl>
+      </div>
+    </header>
+
+    <main id="main">
+      <p class="load-error" id="load-error" hidden></p>
+
+      <section class="section" id="standings-section" aria-labelledby="standings-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="standings-title">The standings</h2>
+            <p>
+              Two separate challenges, scored independently — a team has to win both to lead
+              outright.
+            </p>
+          </div>
+          <div class="boards" id="boards"></div>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top: 0" aria-label="Overall leader">
+        <div class="wrap"><div id="verdict"></div></div>
+      </section>
+
+      <section class="section" aria-labelledby="teams-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="teams-title">The teams</h2>
+            <p>Select any name to see that person's full stats.</p>
+          </div>
+          <div class="teams" id="teams"></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="ladders-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="ladders-title">Individual leaderboards</h2>
+            <p>Every participant across all three teams, ranked.</p>
+          </div>
+          <div class="ladders" id="ladders"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site">
+      <div class="wrap">
+        <p id="footer-source"></p>
+        <p>
+          Steptember raises money for the Cerebral Palsy Alliance. Donations go through each team's
+          own Steptember page.
+        </p>
+        <ul id="footer-links"></ul>
+      </div>
+    </footer>
+
+    <dialog class="profile" id="profile-dialog" aria-labelledby="profile-name">
+      <div class="profile-inner" id="profile-body"></div>
+    </dialog>
+
+    <script type="module" src="assets/js/app.js"></script>
+  </body>
+</html>
