@@ -10,12 +10,7 @@
 
 import { escapeHtml, formatNumber } from './format.js';
 
-const WIDTH = 340;
-const HEIGHT = 150;
 const PAD = { top: 10, right: 10, bottom: 20, left: 10 };
-
-const PLOT_WIDTH = WIDTH - PAD.left - PAD.right;
-const PLOT_HEIGHT = HEIGHT - PAD.top - PAD.bottom;
 
 let uid = 0;
 
@@ -25,19 +20,33 @@ let uid = 0;
  * @param target      optional end-of-month goal, drawn as the dashed pace line
  * @param colour      CSS colour for the line and its area fill
  * @param label       accessible description of what the line represents
+ * @param width       viewBox width — wider for the full-page chart, so the line
+ *                    keeps sane proportions instead of stretching very tall
+ * @param height      viewBox height
  */
-export function cumulativeChart({ values, totalDays, target, colour, label }) {
+export function cumulativeChart({
+  values,
+  totalDays,
+  target,
+  colour,
+  label,
+  width = 340,
+  height = 150,
+}) {
   const points = (values ?? []).filter((value) => Number.isFinite(value));
   if (points.length === 0) {
     return `<p class="chart-empty">No day-by-day figures yet — they appear as soon as steps are logged.</p>`;
   }
 
+  const plotWidth = width - PAD.left - PAD.right;
+  const plotHeight = height - PAD.top - PAD.bottom;
+
   const latest = points.at(-1);
   const ceiling = Math.max(latest, target ?? 0, 1);
   const gradientId = `fade-${(uid += 1)}`;
 
-  const x = (dayIndex) => PAD.left + (dayIndex / (totalDays - 1)) * PLOT_WIDTH;
-  const y = (value) => PAD.top + PLOT_HEIGHT - (value / ceiling) * PLOT_HEIGHT;
+  const x = (dayIndex) => PAD.left + (dayIndex / (totalDays - 1)) * plotWidth;
+  const y = (value) => PAD.top + plotHeight - (value / ceiling) * plotHeight;
 
   const line = points.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ');
   // Close the path down to the baseline so the area beneath can be filled.
@@ -52,12 +61,13 @@ export function cumulativeChart({ values, totalDays, target, colour, label }) {
   const ticks = [0, Math.floor((totalDays - 1) / 2), totalDays - 1]
     .map((dayIndex) => {
       const anchor = dayIndex === 0 ? 'start' : dayIndex === totalDays - 1 ? 'end' : 'middle';
-      return `<text x="${x(dayIndex).toFixed(1)}" y="${HEIGHT - 6}" text-anchor="${anchor}"
+      return `<text x="${x(dayIndex).toFixed(1)}" y="${height - 6}" text-anchor="${anchor}"
                     class="chart-tick">${dayIndex + 1} Sep</text>`;
     })
     .join('');
 
-  return `<svg class="chart" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img"
+  return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img"
+               style="aspect-ratio: ${width} / ${height}"
                aria-label="${escapeHtml(label)}">
     <defs>
       <linearGradient id="${gradientId}" x1="0" x2="0" y1="0" y2="1">
@@ -66,7 +76,7 @@ export function cumulativeChart({ values, totalDays, target, colour, label }) {
       </linearGradient>
     </defs>
 
-    <line x1="${PAD.left}" y1="${y(0)}" x2="${WIDTH - PAD.right}" y2="${y(0)}"
+    <line x1="${PAD.left}" y1="${y(0)}" x2="${width - PAD.right}" y2="${y(0)}"
           class="chart-axis" stroke-width="1" />
     ${paceLine}
 
@@ -80,14 +90,18 @@ export function cumulativeChart({ values, totalDays, target, colour, label }) {
 }
 
 /** The chart plus its heading and latest figure, as one card body. */
-export function chartBlock({ title, values, totalDays, target, colour, label, note }) {
+export function chartBlock({ title, values, totalDays, target, colour, label, note, wide = false }) {
   const latest = (values ?? []).at(-1) ?? 0;
-  return `<div class="chart-block">
+  // A wider viewBox for the full-page chart: at the same 340x150 ratio a
+  // 1200px-wide card would be over 500px tall. 3:1 keeps it a sensible height
+  // on a desktop without flattening to a sliver on a phone.
+  const size = wide ? { width: 900, height: 300 } : {};
+  return `<div class="chart-block${wide ? ' wide' : ''}">
     <div class="chart-head">
       <span class="chart-title">${escapeHtml(title)}</span>
       <strong class="chart-latest">${formatNumber(latest)}</strong>
     </div>
-    ${cumulativeChart({ values, totalDays, target, colour, label })}
+    ${cumulativeChart({ values, totalDays, target, colour, label, ...size })}
     ${note ? `<p class="chart-note">${escapeHtml(note)}</p>` : ''}
   </div>`;
 }

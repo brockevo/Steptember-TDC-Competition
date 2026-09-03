@@ -4,6 +4,7 @@ import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
 import { accentFor, avatar, handleBrokenAvatars, laneFor } from './ui.js';
 import { chartBlock } from './chart.js';
+import { buildInsights } from './insights.js';
 import {
   escapeHtml,
   formatDateTime,
@@ -17,19 +18,18 @@ import {
 const clampPercent = (fraction) => `${(Math.max(0, Math.min(1, fraction || 0)) * 100).toFixed(1)}%`;
 
 /**
- * The signature bar: a pill track with the name and figure set inside it. The
- * label is drawn twice — once on the track, once clipped to the fill — so it
- * keeps its contrast no matter where the bar ends.
+ * The signature bar: a pill track with the name and figure set inside it. Both
+ * the track and the fill are light in either theme, so one ink stays readable
+ * across the whole lane however far the bar reaches.
  */
 function lane({ colour, title, figure, fraction, meta }) {
-  const face = `<span class="lane-title">${escapeHtml(title)}</span>
-    <span class="lane-figure">${escapeHtml(figure)}</span>`;
-
   return `<li class="lane-wrap" style="${laneFor(colour)}; --pct: ${clampPercent(fraction)}">
     <div class="lane" role="img" aria-label="${escapeHtml(`${title}: ${figure}`)}">
       <div class="lane-fill" aria-hidden="true"></div>
-      <div class="lane-face" aria-hidden="true">${face}</div>
-      <div class="lane-face over" aria-hidden="true">${face}</div>
+      <div class="lane-face" aria-hidden="true">
+        <span class="lane-title">${escapeHtml(title)}</span>
+        <span class="lane-figure">${escapeHtml(figure)}</span>
+      </div>
     </div>
     ${meta ? `<p class="lane-meta">${meta}</p>` : ''}
   </li>`;
@@ -286,23 +286,34 @@ function renderLadder({ title, subtitle, members, valueOf, body }) {
   </article>`;
 }
 
-/** Everyone's steps combined, as one cumulative line across September. */
+/** Everyone's steps combined, full width across the foot of the page. */
 function renderOverallChart(data) {
   const { totals, clock } = data;
-  return `<article class="card">
-    <div class="board-head">
-      <h3>Everyone combined</h3><span class="eyebrow">All 12 steppers</span>
-    </div>
+  document.getElementById('overall-chart').innerHTML = `<article class="card">
     ${chartBlock({
-      title: 'Cumulative steps, all teams',
+      title: `Cumulative steps · all ${totals.memberCount} steppers`,
       values: totals.cumulative,
       totalDays: clock.totalDays,
       target: totals.stepTarget,
       colour: 'var(--brand)',
       label: `Combined cumulative steps for all ${totals.memberCount} participants through September, currently ${formatNumber(totals.steps)} against a combined target of ${formatNumber(totals.stepTarget)}`,
       note: `Dashed line is the pace to everyone's combined ${formatNumber(totals.stepTarget)} step target.`,
+      wide: true,
     })}
   </article>`;
+}
+
+/** Milestones and fun comparisons, under the verdict panel. */
+function renderInsights(data) {
+  const cards = buildInsights(data)
+    .map(
+      (fact) => `<article class="insight"${fact.colour ? ` style="${accentFor(fact.colour)}"` : ''}>
+        <span class="insight-kind">${escapeHtml(fact.kind)}</span>
+        <p>${fact.html}</p>
+      </article>`,
+    )
+    .join('');
+  document.getElementById('insights').innerHTML = cards ? `<div class="insights">${cards}</div>` : '';
 }
 
 function renderLadders(data) {
@@ -315,9 +326,6 @@ function renderLadders(data) {
       members: [...data.members].sort((a, b) => b.steps - a.steps),
       valueOf: (member) => formatNumber(member.steps),
     }) +
-    // The right column stacks the fundraiser ladder above the overall chart,
-    // which is what puts the chart in the bottom-right of the page.
-    `<div class="ladder-column">` +
     renderLadder({
       title: 'Top fundraisers',
       subtitle: 'All teams',
@@ -340,9 +348,7 @@ function renderLadders(data) {
                )
                .join('')}
            </div>`,
-    }) +
-    renderOverallChart(data) +
-    `</div>`;
+    });
 }
 
 /* ----------------------------------------------------------------- footer -- */
@@ -371,22 +377,61 @@ function renderFooter(data) {
 
 /* ------------------------------------------------------------------- boot -- */
 
+/**
+ * Light/dark toggle. The choice is remembered per browser and wins over the OS
+ * setting in both directions; the CSS covers the OS default on its own.
+ */
+function initThemeToggle() {
+  const button = document.getElementById('theme-toggle');
+  if (!button) return;
+
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => document.documentElement.dataset.theme === 'dark'
+    || (!document.documentElement.dataset.theme && prefersDark.matches);
+
+  const sync = () => button.setAttribute('aria-pressed', String(isDark()));
+  sync();
+
+  button.addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch (error) {
+      /* Storage can be blocked; the toggle still works for this visit. */
+    }
+    sync();
+  });
+
+  // Follow the OS while the viewer hasn't made a choice of their own.
+  prefersDark.addEventListener('change', sync);
+}
+
 async function start() {
   try {
+    initThemeToggle();
     handleBrokenAvatars();
     const data = await loadCompetition();
     renderHero(data);
     renderStandings(data);
     renderVerdict(data);
+    renderInsights(data);
     renderTeams(data);
     renderLadders(data);
+    renderOverallChart(data);
     renderFooter(data);
     initProfiles(data);
   } catch (error) {
-    const banner = document.getElementById('load-error');
-    banner.hidden = false;
-    banner.textContent = `The scoreboard data could not be loaded (${error.message}). If you opened this file directly, serve the folder over HTTP instead — for example: python3 -m http.server`;
     console.error(error);
+    const banner = document.getElementById('load-error');
+    if (!banner) return;
+    banner.hidden = false;
+    banner.textContent =
+      error.name === 'DataLoadError'
+        ? `The scoreboard data could not be loaded (${error.message}). If you opened this file directly, serve the folder over HTTP instead — for example: python3 -m http.server`
+        : // Anything else is a fault in the page's own code. By far the most
+          // common cause is a stale script left over from a previous deploy.
+          `Something went wrong drawing the scoreboard (${error.message}). This is usually an out-of-date script held in the browser cache — a hard refresh (Ctrl+Shift+R, or Cmd+Shift+R on a Mac) should clear it.`;
   }
 }
 

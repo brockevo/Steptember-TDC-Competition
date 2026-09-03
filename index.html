@@ -9,6 +9,18 @@
       content="Live head-to-head scoreboard for three TDC Steptember teams: most steps and most raised by 30 September 2026."
     />
     <link rel="stylesheet" href="assets/css/styles.css" />
+    <script>
+      // Stamp the saved theme before first paint, so a viewer who chose light
+      // doesn't get a flash of dark (or the reverse) while the page loads.
+      try {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.dataset.theme = saved;
+        }
+      } catch (error) {
+        /* Private browsing can block storage; the OS preference still applies. */
+      }
+    </script>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%9F%3C/text%3E%3C/svg%3E"
@@ -18,13 +30,13 @@
     <header class="hero">
       <div class="wrap">
         <div class="topbar">
-          <span class="icon-btn" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5l7 7-7 7M4 12h15"/></svg>
-          </span>
+          <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
+            <span class="visually-hidden">Switch between light and dark mode</span>
+            <svg class="icon-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/></svg>
+            <svg class="icon-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5 6.7 6.7 0 0 0 20.5 14.3z"/></svg>
+          </button>
           <h1 id="campaign-title">TDC Steptember Challenge</h1>
-          <span class="icon-btn" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
-          </span>
+          <span class="topbar-spacer" aria-hidden="true"></span>
         </div>
         <p class="hero-lede" id="campaign-blurb">
           Three teams. Two challenges. Most steps and most raised by 30 September wins.
@@ -47,7 +59,10 @@
       </section>
 
       <section class="section" style="padding-top: 0" aria-label="Overall leader">
-        <div class="wrap"><div id="verdict"></div></div>
+        <div class="wrap">
+          <div id="verdict"></div>
+          <div id="insights"></div>
+        </div>
       </section>
 
       <section class="section" aria-labelledby="teams-title">
@@ -67,6 +82,16 @@
             <p>Every participant across all three teams, ranked.</p>
           </div>
           <div class="ladders" id="ladders"></div>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top: 0" aria-labelledby="overall-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="overall-title">Everyone combined</h2>
+            <p>Every step from all three teams, adding up across September.</p>
+          </div>
+          <div id="overall-chart"></div>
         </div>
       </section>
     </main>
