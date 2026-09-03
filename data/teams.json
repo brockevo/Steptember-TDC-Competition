@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-03T05:34:06.190Z",
+    "lastUpdated": "2026-09-03T08:13:43.588Z",
     "dataSource": "live"
   },
   "teams": [
@@ -87,7 +87,7 @@
           "name": "Dionne Marks",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/dionnemarks",
-          "steps": 60740,
+          "steps": 61898,
           "stepTarget": 390000,
           "raised": 220,
           "fundraisingGoal": 350,
@@ -98,7 +98,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 51876,
+          "steps": 52167,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
