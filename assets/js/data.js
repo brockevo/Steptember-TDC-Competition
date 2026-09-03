@@ -17,7 +17,11 @@ async function loadJson(path, fallback) {
     return await response.json();
   } catch (error) {
     if (fallback !== undefined) return fallback;
-    throw new Error(`Could not load ${path}: ${error.message}`);
+    // Tagged so the page can tell a genuine fetch problem from a code error and
+    // offer the right advice for each.
+    const failure = new Error(`Could not load ${path}: ${error.message}`);
+    failure.name = 'DataLoadError';
+    throw failure;
   }
 }
 

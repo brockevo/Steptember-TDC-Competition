@@ -26,6 +26,35 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
+      # Pages serves everything with max-age=600 and no content hashing, so for
+      # ten minutes after a deploy a browser can pair fresh HTML with a cached
+      # script. Stamping the commit onto every asset URL means an index.html can
+      # only ever load the exact files it shipped with. This edits the checked
+      # out copy that gets uploaded, never the committed source.
+      - name: Stamp asset URLs with the commit SHA
+        run: |
+          set -euo pipefail
+          V="${GITHUB_SHA::12}"
+
+          # '#' as the delimiter: the alternation below contains '|'.
+          sed -i -E "s#(assets/(css/styles\.css|js/app\.js))\"#\1?v=$V\"#g" index.html
+
+          # The entry point alone isn't enough: app.js?v=NEW importing a bare
+          # './data.js' would still be served from cache.
+          find assets/js -name '*.js' -print0 \
+            | xargs -0 sed -i -E "s#(from '\./[A-Za-z0-9_-]+\.js)'#\1?v=$V'#g"
+
+          # Fail loudly rather than deploying a silently unstamped build.
+          grep -q "js/app\.js?v=$V" index.html || { echo "index.html was not stamped"; exit 1; }
+          grep -q "styles\.css?v=$V" index.html || { echo "stylesheet was not stamped"; exit 1; }
+          if grep -rn "from '\./[A-Za-z0-9_-]*\.js'" assets/js/; then
+            echo "the imports above were not stamped"; exit 1
+          fi
+
+          echo "Stamped with $V:"
+          grep -nE "assets/(css|js)/" index.html
+          grep -rnE "from '\./" assets/js/
+
       # The site is plain HTML/CSS/JS — the repo root is the artifact, no build.
       - uses: actions/upload-pages-artifact@v3
         with:

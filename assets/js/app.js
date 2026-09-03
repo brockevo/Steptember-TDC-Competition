@@ -383,10 +383,16 @@ async function start() {
     renderFooter(data);
     initProfiles(data);
   } catch (error) {
-    const banner = document.getElementById('load-error');
-    banner.hidden = false;
-    banner.textContent = `The scoreboard data could not be loaded (${error.message}). If you opened this file directly, serve the folder over HTTP instead — for example: python3 -m http.server`;
     console.error(error);
+    const banner = document.getElementById('load-error');
+    if (!banner) return;
+    banner.hidden = false;
+    banner.textContent =
+      error.name === 'DataLoadError'
+        ? `The scoreboard data could not be loaded (${error.message}). If you opened this file directly, serve the folder over HTTP instead — for example: python3 -m http.server`
+        : // Anything else is a fault in the page's own code. By far the most
+          // common cause is a stale script left over from a previous deploy.
+          `Something went wrong drawing the scoreboard (${error.message}). This is usually an out-of-date script held in the browser cache — a hard refresh (Ctrl+Shift+R, or Cmd+Shift+R on a Mac) should clear it.`;
   }
 }
 
