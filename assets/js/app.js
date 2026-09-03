@@ -18,19 +18,18 @@ import {
 const clampPercent = (fraction) => `${(Math.max(0, Math.min(1, fraction || 0)) * 100).toFixed(1)}%`;
 
 /**
- * The signature bar: a pill track with the name and figure set inside it. The
- * label is drawn twice — once on the track, once clipped to the fill — so it
- * keeps its contrast no matter where the bar ends.
+ * The signature bar: a pill track with the name and figure set inside it. Both
+ * the track and the fill are light in either theme, so one ink stays readable
+ * across the whole lane however far the bar reaches.
  */
 function lane({ colour, title, figure, fraction, meta }) {
-  const face = `<span class="lane-title">${escapeHtml(title)}</span>
-    <span class="lane-figure">${escapeHtml(figure)}</span>`;
-
   return `<li class="lane-wrap" style="${laneFor(colour)}; --pct: ${clampPercent(fraction)}">
     <div class="lane" role="img" aria-label="${escapeHtml(`${title}: ${figure}`)}">
       <div class="lane-fill" aria-hidden="true"></div>
-      <div class="lane-face" aria-hidden="true">${face}</div>
-      <div class="lane-face over" aria-hidden="true">${face}</div>
+      <div class="lane-face" aria-hidden="true">
+        <span class="lane-title">${escapeHtml(title)}</span>
+        <span class="lane-figure">${escapeHtml(figure)}</span>
+      </div>
     </div>
     ${meta ? `<p class="lane-meta">${meta}</p>` : ''}
   </li>`;

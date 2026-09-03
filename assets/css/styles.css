@@ -77,9 +77,14 @@
 
   /* Fills stay light in dark mode and keep dark ink, the way the reference
      dark screen does. Deliberate: legibility here is governed by the >= 6:1
-     ink-on-fill contrast, not by the mid-tone band for marks on a surface. */
-  --d-lane-track: #2a2a28;
-  --d-lane-ink-track: #ffffff;
+     ink-on-fill contrast, not by the mid-tone band for marks on a surface.
+
+     The track stays light for the same reason — the reference dark screen puts
+     white bars on its panel. A dark track would need light ink while the fill
+     needs dark ink, and a label crossing the fill's edge would then render
+     half in each. Keeping both backgrounds light means one ink works across
+     the whole lane. */
+  --d-lane-track: #dcdbd4;
 
   --d-brand: #7b68ee;
   --d-brand-deep: #6a55e0;
@@ -108,7 +113,6 @@
     --team-2: var(--d-team-2);
     --team-3: var(--d-team-3);
     --lane-track: var(--d-lane-track);
-    --lane-ink-track: var(--d-lane-ink-track);
     --brand: var(--d-brand);
     --brand-deep: var(--d-brand-deep);
     --gold: var(--d-gold);
@@ -134,7 +138,6 @@
   --team-2: var(--d-team-2);
   --team-3: var(--d-team-3);
   --lane-track: var(--d-lane-track);
-  --lane-ink-track: var(--d-lane-ink-track);
   --brand: var(--d-brand);
   --brand-deep: var(--d-brand-deep);
   --gold: var(--d-gold);
@@ -448,8 +451,8 @@ a {
   transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Two identical full-width text layers. The base sits on the track; the copy is
-   clipped to the fill, so the label keeps its contrast wherever the bar ends. */
+/* One text layer. Track and fill are both light in either mode, so a single
+   dark ink stays readable wherever the bar happens to end. */
 .lane-face {
   position: absolute;
   inset: 0;
@@ -459,11 +462,6 @@ a {
   padding: 17px clamp(18px, 2.4vw, 26px);
   color: var(--lane-ink-track);
   pointer-events: none;
-}
-
-.lane-face.over {
-  color: var(--lane-ink-fill);
-  clip-path: inset(0 calc(100% - var(--pct, 0%)) 0 0);
 }
 
 .lane-title {
