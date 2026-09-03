@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-03T14:13:23.913Z",
+    "lastUpdated": "2026-09-03T22:11:44.055Z",
     "dataSource": "live"
   },
   "teams": [
@@ -33,7 +33,7 @@
           "name": "Christopher Tansey",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/christophertansey",
-          "steps": 29415,
+          "steps": 33332,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -141,7 +141,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 53778,
+          "steps": 63397,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
