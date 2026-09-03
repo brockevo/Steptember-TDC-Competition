@@ -56,40 +56,91 @@
   --page-max: 1200px;
 }
 
+/* The dark palette's values, held once so a colour change is a one-line edit.
+   They are switched on in two places below: the OS preference, and an explicit
+   choice from the theme toggle — which has to win in both directions. */
+:root {
+  --d-surface: #1c1c1b;
+  --d-plane: #0c0c0c;
+  --d-sunk: #262625;
+
+  --d-ink: #ffffff;
+  --d-ink-secondary: #c6c5bc;
+  --d-ink-muted: #96948b;
+
+  --d-hairline: #2b2b29;
+  --d-hairline-strong: #3a3a37;
+
+  --d-team-1: #3987e5;
+  --d-team-2: #eb6834;
+  --d-team-3: #1fc78b;
+
+  /* Fills stay light in dark mode and keep dark ink, the way the reference
+     dark screen does. Deliberate: legibility here is governed by the >= 6:1
+     ink-on-fill contrast, not by the mid-tone band for marks on a surface. */
+  --d-lane-track: #2a2a28;
+  --d-lane-ink-track: #ffffff;
+
+  --d-brand: #7b68ee;
+  --d-brand-deep: #6a55e0;
+
+  --d-gold: #e0a32c;
+  --d-good: #35c635;
+
+  --d-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.7);
+  --d-shadow-lift: 0 8px 16px -8px rgba(0, 0, 0, 0.5), 0 32px 64px -32px rgba(0, 0, 0, 0.8);
+}
+
 @media (prefers-color-scheme: dark) {
+  /* OS is dark and the viewer hasn't explicitly chosen light. */
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --surface: #1c1c1b;
-    --plane: #0c0c0c;
-    --sunk: #262625;
-
-    --ink: #ffffff;
-    --ink-secondary: #c6c5bc;
-    --ink-muted: #96948b;
-
-    --hairline: #2b2b29;
-    --hairline-strong: #3a3a37;
-
-    --team-1: #3987e5;
-    --team-2: #eb6834;
-    --team-3: #1fc78b;
-
-    /* Fills stay light in dark mode and keep dark ink, the way the reference
-       dark screen does. Deliberate: legibility here is governed by the >= 6:1
-       ink-on-fill contrast, not by the mid-tone band for marks on a surface. */
-    --lane-track: #2a2a28;
-    --lane-ink-track: #ffffff;
-
-    --brand: #7b68ee;
-    --brand-deep: #6a55e0;
-
-    --gold: #e0a32c;
-    --good: #35c635;
-
-    --shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.7);
-    --shadow-lift: 0 8px 16px -8px rgba(0, 0, 0, 0.5), 0 32px 64px -32px rgba(0, 0, 0, 0.8);
+    --surface: var(--d-surface);
+    --plane: var(--d-plane);
+    --sunk: var(--d-sunk);
+    --ink: var(--d-ink);
+    --ink-secondary: var(--d-ink-secondary);
+    --ink-muted: var(--d-ink-muted);
+    --hairline: var(--d-hairline);
+    --hairline-strong: var(--d-hairline-strong);
+    --team-1: var(--d-team-1);
+    --team-2: var(--d-team-2);
+    --team-3: var(--d-team-3);
+    --lane-track: var(--d-lane-track);
+    --lane-ink-track: var(--d-lane-ink-track);
+    --brand: var(--d-brand);
+    --brand-deep: var(--d-brand-deep);
+    --gold: var(--d-gold);
+    --good: var(--d-good);
+    --shadow: var(--d-shadow);
+    --shadow-lift: var(--d-shadow-lift);
   }
+}
+
+/* The viewer explicitly chose dark, whatever the OS says. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --surface: var(--d-surface);
+  --plane: var(--d-plane);
+  --sunk: var(--d-sunk);
+  --ink: var(--d-ink);
+  --ink-secondary: var(--d-ink-secondary);
+  --ink-muted: var(--d-ink-muted);
+  --hairline: var(--d-hairline);
+  --hairline-strong: var(--d-hairline-strong);
+  --team-1: var(--d-team-1);
+  --team-2: var(--d-team-2);
+  --team-3: var(--d-team-3);
+  --lane-track: var(--d-lane-track);
+  --lane-ink-track: var(--d-lane-ink-track);
+  --brand: var(--d-brand);
+  --brand-deep: var(--d-brand-deep);
+  --gold: var(--d-gold);
+  --good: var(--d-good);
+  --shadow: var(--d-shadow);
+  --shadow-lift: var(--d-shadow-lift);
 }
 
 *,
@@ -205,14 +256,19 @@ a {
   }
 }
 
+:root[data-theme='dark'] .hero::before {
+  opacity: 0.34;
+}
+
 .hero > .wrap {
   position: relative;
 }
 
+/* Fixed side columns keep the title centred now the right-hand icon is gone. */
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: clamp(20px, 3vw, 34px);
 }
@@ -227,13 +283,58 @@ a {
   display: grid;
   place-items: center;
   flex: none;
+  cursor: pointer;
   box-shadow: 0 2px 8px -2px rgba(16, 16, 20, 0.18);
+}
+
+.icon-btn:hover {
+  color: var(--brand);
+}
+
+/* Show the icon for the mode the button would switch you to. */
+.icon-moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .icon-sun {
+    display: none;
+  }
+
+  :root:not([data-theme='light']) .icon-moon {
+    display: block;
+  }
+}
+
+:root[data-theme='dark'] .icon-sun {
+  display: none;
+}
+
+:root[data-theme='dark'] .icon-moon {
+  display: block;
+}
+
+/* An explicit light choice wins over a dark OS. */
+:root[data-theme='light'] .icon-sun {
+  display: block;
+}
+
+:root[data-theme='light'] .icon-moon {
+  display: none;
 }
 
 .topbar h1 {
   font-size: clamp(22px, 3.4vw, 30px);
   text-align: center;
-  flex: 1;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .hero-lede {
@@ -994,14 +1095,38 @@ dialog.profile::backdrop {
   font-variant-numeric: tabular-nums;
 }
 
-/* Scales uniformly, so tick text and stroke widths keep their proportions. */
+/* Scales uniformly, so tick text and stroke widths keep their proportions. The
+   ratio comes from the viewBox the chart was drawn at, set inline. */
 .chart {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 340 / 150;
   overflow: visible;
   color: var(--ink-muted);
+}
+
+/* The full-width chart at the foot of the page. */
+.chart-block.wide {
+  padding: 18px 20px 12px;
+}
+
+.chart-block.wide .chart-latest {
+  font-size: clamp(24px, 3.4vw, 34px);
+}
+
+.chart-block.wide .chart-title {
+  font-size: 13px;
+}
+
+/* Tick text is in viewBox units, so the wider box needs a larger size to come
+   out the same on screen. */
+.chart-block.wide .chart-tick {
+  font-size: 13px;
+}
+
+.chart-block.wide .chart-pace,
+.chart-block.wide .chart-axis {
+  stroke-width: 2;
 }
 
 .chart-axis {
@@ -1030,15 +1155,43 @@ dialog.profile::backdrop {
   padding: 18px 0;
 }
 
-/* The overall chart sits under the fundraiser ladder, bottom right. */
-.ladders {
-  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+/* -------------------------------------------------------------- insights -- */
+
+.insights {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 18px;
 }
 
-.ladder-column {
-  display: grid;
-  gap: 18px;
-  align-content: start;
+.insight {
+  background: var(--surface);
+  border-radius: var(--r-card);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  border-left: 5px solid var(--accent, var(--brand));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insight-kind {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent, var(--brand));
+}
+
+.insight p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.insight strong {
+  font-weight: 800;
 }
 
 /* --------------------------------------------------------------- footer --- */
