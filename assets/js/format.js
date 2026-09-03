@@ -42,6 +42,16 @@ export function plural(count, singular, pluralForm = `${singular}s`) {
   return count === 1 ? singular : pluralForm;
 }
 
+/** Up to two initials for an avatar, e.g. "Dionne Marks" -> "DM". */
+export function initials(name) {
+  return String(name ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join('');
+}
+
 /** Escapes text before it goes into a template literal that becomes innerHTML. */
 export function escapeHtml(value) {
   return String(value ?? '').replace(

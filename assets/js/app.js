@@ -8,37 +8,53 @@ import {
   formatMoney,
   formatNumber,
   formatPercent,
+  initials,
   ordinal,
   plural,
 } from './format.js';
 
-const POSITION_LABEL = { 1: '1st', 2: '2nd', 3: '3rd' };
+/** Solid team colour, for avatars, dots, borders and buttons. */
+const accentFor = (colour) => `--accent: var(--team-${colour})`;
+/** Lighter step of the same hue, for lane fills that carry a label on top. */
+const laneFor = (colour) => `--lane: var(--lane-${colour})`;
 
-const accentFor = (team) => `--accent: var(--team-${team.colour})`;
+const clampPercent = (fraction) => `${(Math.max(0, Math.min(1, fraction || 0)) * 100).toFixed(1)}%`;
 
 /**
- * A bar carrying its own value in the label, so the figure never depends on
- * reading the geometry — and so the lighter palette slots stay legible.
+ * The signature bar: a pill track with the name and figure set inside it. The
+ * label is drawn twice — once on the track, once clipped to the fill — so it
+ * keeps its contrast no matter where the bar ends.
  */
-function bar(fraction, label) {
-  const width = Math.max(0, Math.min(1, fraction || 0)) * 100;
-  return `<div class="bar" role="img" aria-label="${escapeHtml(label)}">
-    <span style="width: ${width.toFixed(1)}%"></span>
-  </div>`;
+function lane({ colour, title, figure, fraction, meta }) {
+  const face = `<span class="lane-title">${escapeHtml(title)}</span>
+    <span class="lane-figure">${escapeHtml(figure)}</span>`;
+
+  return `<li class="lane-wrap" style="${laneFor(colour)}; --pct: ${clampPercent(fraction)}">
+    <div class="lane" role="img" aria-label="${escapeHtml(`${title}: ${figure}`)}">
+      <div class="lane-fill" aria-hidden="true"></div>
+      <div class="lane-face" aria-hidden="true">${face}</div>
+      <div class="lane-face over" aria-hidden="true">${face}</div>
+    </div>
+    ${meta ? `<p class="lane-meta">${meta}</p>` : ''}
+  </li>`;
+}
+
+function rankChip(rank) {
+  return `<span class="rank-chip${rank === 1 ? ' first' : ''}">${ordinal(rank)}</span>`;
+}
+
+function avatar(member, extraClass = '') {
+  return `<span class="avatar ${extraClass}" style="${accentFor(member.teamColour)}" aria-hidden="true">${escapeHtml(
+    initials(member.name),
+  )}</span>`;
 }
 
 /* ------------------------------------------------------------------- hero -- */
 
 function renderHero(data) {
   const { competition, clock, totals } = data;
-  document.getElementById('campaign-title').textContent =
-    `${competition.name} ${competition.year ?? ''}`.trim();
+  document.getElementById('campaign-title').textContent = competition.name;
   document.title = `${competition.name} — three teams, two challenges`;
-
-  const window_ = clock.finished
-    ? 'Finished — 30 September 2026'
-    : `1–30 September ${competition.year ?? 2026}`;
-  document.getElementById('campaign-window').textContent = window_;
 
   const countdown = clock.finished
     ? 'The month is done — final results below.'
@@ -46,112 +62,84 @@ function renderHero(data) {
   document.getElementById('campaign-blurb').textContent =
     `Three teams. Two challenges. Most steps and most raised by 30 September wins. ${countdown}`;
 
+  const raised = formatMoney(totals.raised, competition.currency);
   document.getElementById('hero-stats').innerHTML = `
-    <div class="stat">
+    <div>
+      <dd>${formatNumber(totals.steps)}</dd>
       <dt>Steps together</dt>
-      <dd class="num">${formatNumber(totals.steps)}</dd>
-      <small>${totals.memberCount} steppers across 3 teams</small>
     </div>
-    <div class="stat">
+    <div>
+      <dd>${escapeHtml(raised)}</dd>
       <dt>Raised together</dt>
-      <dd class="num">${formatMoney(totals.raised, competition.currency)}</dd>
-      <small>of ${formatMoney(totals.goal, competition.currency)} in combined goals</small>
     </div>
-    <div class="stat">
-      <dt>${clock.finished ? 'Days completed' : 'Days remaining'}</dt>
-      <dd class="num">${clock.finished ? clock.totalDays : clock.daysRemaining}</dd>
-      <small>day ${clock.daysElapsed} of ${clock.totalDays}</small>
+    <div>
+      <dd>${clock.finished ? clock.totalDays : clock.daysRemaining}</dd>
+      <dt>${clock.finished ? 'Days completed' : `Days left of ${clock.totalDays}`}</dt>
     </div>`;
 }
 
 /* ------------------------------------------------------------ scoreboards -- */
 
-function renderBoard({ title, subtitle, teams, valueOf, standingOf, gapLabel }) {
+function renderStepBoard(teams) {
   const rows = teams
-    .map((team) => {
-      const standing = standingOf(team);
-      const isLeader = standing.rank === 1;
-      const gap = isLeader
-        ? '<span class="race-gap leading">Leading</span>'
-        : `<span class="race-gap">${escapeHtml(gapLabel(standing.gapToLeader))}</span>`;
-
-      return `<li style="${accentFor(team)}">
-        <div class="race-top">
-          <span class="pos">${POSITION_LABEL[standing.rank] ?? ordinal(standing.rank)}</span>
-          <span class="race-name">${escapeHtml(team.name)}</span>
-          <span class="race-value">${escapeHtml(valueOf(team))}</span>
-        </div>
-        ${bar(standing.shareOfLeader, `${team.name}: ${valueOf(team)}`)}
-        ${gap}
-      </li>`;
-    })
-    .join('');
-
-  return `<article class="board">
-    <div class="board-head">
-      <h3>${escapeHtml(title)}</h3>
-      <span class="eyebrow">${escapeHtml(subtitle)}</span>
-    </div>
-    <ol class="race">${rows}</ol>
-  </article>`;
-}
-
-/**
- * Before the first donation every team is on $0, so ranking them would be
- * meaningless. Show the field level, with each team's goal and a way to give.
- */
-function renderMoneyBoardAtZero(teams, currency) {
-  const rows = teams
-    .map(
-      (team) => `<li style="${accentFor(team)}">
-        <div class="race-top">
-          <span class="pos">—</span>
-          <span class="race-name">${escapeHtml(team.name)}</span>
-          <span class="race-value">${formatMoney(0, currency)}</span>
-        </div>
-        <span class="race-gap">
-          Goal ${formatMoney(team.goal, currency)} ·
-          <a href="${escapeHtml(team.url)}" target="_blank" rel="noopener">Sponsor them</a>
-        </span>
-      </li>`,
+    .map((team) =>
+      lane({
+        colour: team.colour,
+        title: team.name,
+        figure: formatNumber(team.steps),
+        fraction: team.stepStanding.shareOfLeader,
+        meta:
+          rankChip(team.stepStanding.rank) +
+          (team.stepStanding.rank === 1
+            ? '<span>Leading the challenge</span>'
+            : `<span>${formatNumber(team.stepStanding.gapToLeader)} steps behind</span>`),
+      }),
     )
     .join('');
 
-  return `<article class="board">
-    <div class="board-head">
-      <h3>Most raised</h3>
-      <span class="eyebrow">Challenge 2</span>
-    </div>
-    <p class="empty">All three teams are level on nothing. The first donation takes the lead.</p>
-    <ol class="race">${rows}</ol>
+  return `<article class="card">
+    <div class="board-head"><h3>Most steps</h3><span class="eyebrow">Challenge 1</span></div>
+    <ol class="lanes">${rows}</ol>
+  </article>`;
+}
+
+function renderMoneyBoard(teams, currency, started) {
+  const rows = teams
+    .map((team) =>
+      lane({
+        colour: team.colour,
+        title: team.name,
+        figure: formatMoney(team.raised, currency),
+        // Before any donations the bars would all be empty, so show progress
+        // toward each team's own goal instead of a meaningless ranking.
+        fraction: started ? team.moneyStanding.shareOfLeader : 0,
+        meta: started
+          ? rankChip(team.moneyStanding.rank) +
+            (team.moneyStanding.rank === 1
+              ? '<span>Leading the challenge</span>'
+              : `<span>${formatMoney(team.moneyStanding.gapToLeader, currency)} behind</span>`)
+          : `<span>Goal ${formatMoney(team.goal, currency)}</span>
+             <a class="link" href="${escapeHtml(team.url)}" target="_blank" rel="noopener">Sponsor them</a>`,
+      }),
+    )
+    .join('');
+
+  return `<article class="card">
+    <div class="board-head"><h3>Most raised</h3><span class="eyebrow">Challenge 2</span></div>
+    ${started ? '' : '<p class="empty">All three teams are level on nothing. The first donation takes the lead.</p>'}
+    <ol class="lanes">${rows}</ol>
   </article>`;
 }
 
 function renderStandings(data) {
   const { competition, standings } = data;
-  const bySteps = [...data.teams].sort((a, b) => b.steps - a.steps);
-  const byMoney = [...data.teams].sort((a, b) => (b.raised ?? 0) - (a.raised ?? 0));
-
-  const moneyBoard = standings.fundraisingStarted
-    ? renderBoard({
-        title: 'Most raised',
-        subtitle: 'Challenge 2',
-        teams: byMoney,
-        valueOf: (team) => formatMoney(team.raised, competition.currency),
-        standingOf: (team) => team.moneyStanding,
-        gapLabel: (gap) => `${formatMoney(gap, competition.currency)} behind`,
-      })
-    : renderMoneyBoardAtZero(byMoney, competition.currency);
-
   document.getElementById('boards').innerHTML =
-    renderBoard({
-      title: 'Most steps',
-      subtitle: 'Challenge 1',
-      teams: bySteps,
-      valueOf: (team) => formatNumber(team.steps),
-      standingOf: (team) => team.stepStanding,
-      gapLabel: (gap) => `${formatNumber(gap)} steps behind`,
-    }) + moneyBoard;
+    renderStepBoard([...data.teams].sort((a, b) => b.steps - a.steps)) +
+    renderMoneyBoard(
+      [...data.teams].sort((a, b) => (b.raised ?? 0) - (a.raised ?? 0)),
+      competition.currency,
+      standings.fundraisingStarted,
+    );
 }
 
 function renderVerdict(data) {
@@ -164,11 +152,9 @@ function renderVerdict(data) {
 
   let headline;
   let detail;
-  let accent = `--accent: var(--team-${stepLeader.colour})`;
 
   if (standings.outrightLeader) {
     const leader = standings.outrightLeader;
-    accent = `--accent: var(--team-${leader.colour})`;
     headline = `${leader.name} leads both challenges.`;
     detail = `${formatNumber(stepGap)} steps clear of second, with ${formatMoney(
       leader.moneyStanding.value,
@@ -184,31 +170,33 @@ function renderVerdict(data) {
         ? 'Fundraising has not started, so both challenges are still anyone’s.'
         : `${formatNumber(stepGap)} steps clear of second — and with no donations in yet, the fundraising challenge is untouched.`;
   } else {
-    const moneyLeader = standings.moneyLeaders[0];
     headline = 'The challenges are split.';
-    detail = `${stepLeader.name} leads on steps, ${moneyLeader.name} leads on fundraising.`;
+    detail = `${stepLeader.name} leads on steps, ${standings.moneyLeaders[0].name} leads on fundraising.`;
   }
 
-  document.getElementById('verdict').innerHTML = `<div class="verdict" style="${accent}">
-    <p>${escapeHtml(headline)}</p>
-    <span>${escapeHtml(detail)}</span>
+  document.getElementById('verdict').innerHTML = `<div class="verdict">
+    <p class="eyebrow">Where it stands</p>
+    <h2>${escapeHtml(headline)}</h2>
+    <p>${escapeHtml(detail)}</p>
   </div>`;
 }
 
 /* ------------------------------------------------------------ team cards -- */
 
-function rosterRow(member, currency, teamBest) {
-  const captain = member.captain ? '<span class="crown">Captain</span>' : '';
-  // Measured against the team's top stepper, so the bars rank the same way the
-  // numbers beside them do.
-  return `<tr data-member-id="${escapeHtml(member.id)}">
-    <td>
-      <button type="button" class="member-button">${escapeHtml(member.name)}</button>${captain}
-      ${bar(teamBest > 0 ? member.steps / teamBest : 0, `${member.name}: ${formatNumber(member.steps)} steps`)}
-    </td>
-    <td class="num">${formatNumber(member.steps)}</td>
-    <td class="num">${formatMoney(member.raised, currency)}</td>
-  </tr>`;
+function rosterRow(member, currency) {
+  return `<li>
+    <button type="button" class="person" data-member-id="${escapeHtml(member.id)}">
+      ${avatar(member)}
+      <span class="person-name">
+        ${escapeHtml(member.name)}${member.captain ? '<span class="captain-tag">Captain</span>' : ''}
+        <small>${formatPercent(member.targetProgress ?? 0)} of their target</small>
+      </span>
+      <span class="person-value">
+        ${formatNumber(member.steps)}
+        <small>${formatMoney(member.raised, currency)}</small>
+      </span>
+    </button>
+  </li>`;
 }
 
 function renderTeams(data) {
@@ -226,8 +214,8 @@ function renderTeams(data) {
           : `<span class="badge">${ordinal(team.moneyStanding.rank)} on fundraising</span>`
         : '<span class="badge">Fundraising not started</span>';
 
-      return `<article class="team" style="${accentFor(team)}">
-        <h3>${escapeHtml(team.name)}</h3>
+      return `<article class="team" style="${accentFor(team.colour)}">
+        <div class="team-top"><h3>${escapeHtml(team.name)}</h3></div>
         <div class="badges">
           ${stepBadge}${moneyBadge}
           <span class="badge">${team.memberCount} ${plural(team.memberCount, 'member')}</span>
@@ -252,23 +240,16 @@ function renderTeams(data) {
           </div>
         </div>
 
-        <table class="roster">
-          <caption>Team roster</caption>
-          <thead>
-            <tr><th scope="col">Member</th><th scope="col">Steps</th><th scope="col">Raised</th></tr>
-          </thead>
-          <tbody>
-            ${[...team.members]
-              .sort((a, b) => b.steps - a.steps)
-              .map((member, _, sorted) =>
-                rosterRow(member, competition.currency, sorted[0].steps),
-              )
-              .join('')}
-          </tbody>
-        </table>
+        <p class="roster-title">Team roster</p>
+        <ul class="roster">
+          ${[...team.members]
+            .sort((a, b) => b.steps - a.steps)
+            .map((member) => rosterRow(member, competition.currency))
+            .join('')}
+        </ul>
 
-        <div class="team-links">
-          <a class="btn btn-primary" href="${escapeHtml(team.url)}" target="_blank" rel="noopener">
+        <div class="btn-row">
+          <a class="btn btn-solid" href="${escapeHtml(team.url)}" target="_blank" rel="noopener">
             Sponsor this team
           </a>
           <a class="btn" href="${escapeHtml(team.url)}" target="_blank" rel="noopener">
@@ -282,34 +263,32 @@ function renderTeams(data) {
 
 /* ---------------------------------------------------- individual ladders --- */
 
-function renderLadder({ title, subtitle, members, valueOf, emptyBody }) {
+function renderLadder({ title, subtitle, members, valueOf, body }) {
   const rows = members
     .map(
-      (member, index) => `<li style="--accent: var(--team-${member.teamColour})">
-        <button type="button" class="ladder-row" data-member-id="${escapeHtml(member.id)}">
+      (member, index) => `<li>
+        <button type="button" class="person" data-member-id="${escapeHtml(member.id)}">
           <span class="pos">${index + 1}</span>
-          <span class="dot" aria-hidden="true"></span>
-          <span class="ladder-name">
+          ${avatar(member, 'sm')}
+          <span class="person-name">
             ${escapeHtml(member.name)}
             <small>${escapeHtml(member.teamName)}</small>
           </span>
-          <span class="ladder-value">${escapeHtml(valueOf(member))}</span>
+          <span class="person-value">${escapeHtml(valueOf(member))}</span>
         </button>
       </li>`,
     )
     .join('');
 
-  return `<article class="board">
-    <div class="board-head">
-      <h3>${escapeHtml(title)}</h3>
-      <span class="eyebrow">${escapeHtml(subtitle)}</span>
-    </div>
-    ${emptyBody ?? `<ol class="ladder">${rows}</ol>`}
+  return `<article class="card">
+    <div class="board-head"><h3>${escapeHtml(title)}</h3><span class="eyebrow">${escapeHtml(subtitle)}</span></div>
+    ${body ?? `<ul class="ladder">${rows}</ul>`}
   </article>`;
 }
 
 function renderLadders(data) {
   const { competition, standings } = data;
+
   document.getElementById('ladders').innerHTML =
     renderLadder({
       title: 'Top steppers',
@@ -322,19 +301,20 @@ function renderLadders(data) {
       subtitle: 'All teams',
       members: [...data.members].sort((a, b) => (b.raised ?? 0) - (a.raised ?? 0)),
       valueOf: (member) => formatMoney(member.raised, competition.currency),
-      emptyBody: standings.fundraisingStarted
+      // Numbering twelve people who are all on $0 would assert an order that
+      // doesn't exist. Show the prompt to give instead, until someone is ahead.
+      body: standings.fundraisingStarted
         ? null
         : `<p class="empty">
-             Nobody has been sponsored yet. The first donation puts someone straight to the top
-             of this list — every dollar goes to the Cerebral Palsy Alliance.
+             Nobody has been sponsored yet — the first donation puts someone straight to the top
+             of this list. Every dollar goes to the Cerebral Palsy Alliance.
            </p>
-           <div class="team-links" style="padding-top: 0">
+           <div class="btn-row">
              ${data.teams
                .map(
                  (team) =>
-                   `<a class="btn" href="${escapeHtml(team.url)}" target="_blank" rel="noopener">
-                      Sponsor ${escapeHtml(team.name)}
-                    </a>`,
+                   `<a class="btn btn-solid" style="${accentFor(team.colour)}" href="${escapeHtml(team.url)}"
+                       target="_blank" rel="noopener">Sponsor ${escapeHtml(team.name)}</a>`,
                )
                .join('')}
            </div>`,
@@ -360,7 +340,7 @@ function renderFooter(data) {
   document.getElementById('footer-links').innerHTML = data.teams
     .map(
       (team) =>
-        `<li><a href="${escapeHtml(team.url)}" target="_blank" rel="noopener">${escapeHtml(team.name)}</a></li>`,
+        `<li><a class="btn" href="${escapeHtml(team.url)}" target="_blank" rel="noopener">${escapeHtml(team.name)}</a></li>`,
     )
     .join('');
 }

@@ -10,6 +10,7 @@ import {
   formatMoney,
   formatNumber,
   formatPercent,
+  initials,
   ordinal,
   plural,
 } from './format.js';
@@ -23,18 +24,45 @@ function kpi(label, value, note) {
   </div>`;
 }
 
-function progressBlock({ label, value, fraction, note, accentNote }) {
-  const width = Math.max(0, Math.min(1, fraction || 0)) * 100;
-  return `<div class="progress-block">
-    <div class="progress-head">
-      <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(value)}</strong>
+function miniLane({ label, value, fraction, note, tick }) {
+  const width = (Math.max(0, Math.min(1, fraction || 0)) * 100).toFixed(1);
+  return `<div class="mini-lane">
+    <div class="mini-head"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+    <div class="mini-track" role="img" aria-label="${escapeHtml(`${label}: ${value}`)}">
+      <span style="width: ${width}%"></span>
     </div>
-    <div class="bar" role="img" aria-label="${escapeHtml(`${label}: ${value}`)}">
-      <span style="width: ${width.toFixed(1)}%"></span>
-    </div>
-    ${note ? `<p class="progress-note">${accentNote ?? ''}${escapeHtml(note)}</p>` : ''}
+    ${note ? `<p class="mini-note">${tick ? '<span class="on-track">✓</span> ' : ''}${escapeHtml(note)}</p>` : ''}
   </div>`;
+}
+
+/**
+ * Daily steps as bars with the value floating above each one. Only meaningful
+ * once history holds two or more days to difference, so the caller checks first.
+ */
+function dailyChart(deltas) {
+  const recent = deltas.slice(-6);
+  const peak = Math.max(...recent.map((day) => day.steps), 1);
+  const best = recent.reduce((top, day) => (day.steps > top.steps ? day : top));
+
+  const columns = recent
+    .map((day) => {
+      const height = Math.max((day.steps / peak) * 100, 4);
+      const label = new Date(`${day.date}T00:00:00`).toLocaleDateString('en-AU', {
+        day: 'numeric',
+        month: 'short',
+      });
+      return `<div class="daily-col">
+        <span class="bubble">${formatNumber(day.steps)}</span>
+        <div class="daily-bar${day === best ? ' best' : ''}" style="height: ${height.toFixed(1)}%"></div>
+        <span class="daily-label">${escapeHtml(label)}</span>
+      </div>`;
+    })
+    .join('');
+
+  return `<section class="daily">
+    <h3>Steps per day</h3>
+    <div class="daily-plot">${columns}</div>
+  </section>`;
 }
 
 function buildProfile(member, data) {
@@ -43,7 +71,7 @@ function buildProfile(member, data) {
   /** Under a week in, a straight-line projection is noise, not a forecast. */
   const earlyDays = clock.daysElapsed < 5;
 
-  const stepStats = [
+  const stats = [
     kpi(
       'Total steps',
       formatNumber(member.steps),
@@ -57,8 +85,6 @@ function buildProfile(member, data) {
     kpi(
       'Projected by 30 Sep',
       formatNumber(member.projected),
-      // Early in the month a handful of days is a thin basis for a forecast, so
-      // say so rather than dressing the arithmetic up as a prediction.
       earlyDays
         ? `at this pace — only ${clock.daysElapsed} ${plural(clock.daysElapsed, 'day')} in, so treat it lightly`
         : member.stepTarget
@@ -75,7 +101,7 @@ function buildProfile(member, data) {
   ];
 
   if (member.stepTarget) {
-    stepStats.push(
+    stats.push(
       member.neededPerDay > 0
         ? kpi(
             'Needed per day',
@@ -87,30 +113,27 @@ function buildProfile(member, data) {
   }
 
   if (member.bestDay) {
-    stepStats.push(kpi('Best day', formatNumber(member.bestDay.steps), `on ${member.bestDay.date}`));
-  }
-  if (member.lastDay) {
-    stepStats.push(kpi('Latest day', formatNumber(member.lastDay.steps), `on ${member.lastDay.date}`));
+    stats.push(kpi('Best day', formatNumber(member.bestDay.steps), `on ${member.bestDay.date}`));
   }
 
-  stepStats.push(
+  stats.push(
     kpi('Distance walked', `${member.distanceKm.toFixed(1)} km`, 'estimated at 0.75 m per step'),
   );
 
-  if (member.personAbove) {
-    stepStats.push(
-      kpi(
-        'Gap to catch',
-        formatNumber(member.gapToPersonAbove),
-        `steps behind ${member.personAbove}`,
-      ),
-    );
-  } else {
-    stepStats.push(kpi('Overall position', 'Out in front', 'leading every stepper'));
-  }
+  stats.push(
+    member.personAbove
+      ? kpi(
+          'Gap to catch',
+          formatNumber(member.gapToPersonAbove),
+          `steps behind ${member.personAbove}`,
+        )
+      : kpi('Overall position', 'Out in front', 'leading every stepper'),
+  );
 
-  const targetProgress = member.stepTarget
-    ? progressBlock({
+  const deltas = data.history.deltasFor(member.id);
+
+  const targetLane = member.stepTarget
+    ? miniLane({
         label: 'Personal step target',
         value: `${formatNumber(member.steps)} of ${formatNumber(member.stepTarget)}`,
         fraction: member.targetProgress,
@@ -118,12 +141,12 @@ function buildProfile(member, data) {
           member.stepsRemaining > 0
             ? `${formatPercent(member.targetProgress)} there — ${formatNumber(member.stepsRemaining)} steps to go.`
             : `Target smashed — ${formatPercent(member.targetProgress)} of the goal.`,
-        accentNote: member.stepsRemaining === 0 ? '<span class="on-track">✓</span> ' : '',
+        tick: member.stepsRemaining === 0,
       })
     : '';
 
-  const fundraising = member.fundraisingGoal
-    ? progressBlock({
+  const fundraisingLane = member.fundraisingGoal
+    ? miniLane({
         label: 'Personal fundraising goal',
         value: `${formatMoney(member.raised, currency)} of ${formatMoney(member.fundraisingGoal, currency)}`,
         fraction: member.fundraisingProgress,
@@ -136,9 +159,10 @@ function buildProfile(member, data) {
 
   return `
     <div class="profile-head">
+      <span class="avatar lg" aria-hidden="true">${escapeHtml(initials(member.name))}</span>
       <div>
         <h2 id="profile-name">${escapeHtml(member.name)}${
-          member.captain ? '<span class="crown">Team captain</span>' : ''
+          member.captain ? '<span class="captain-tag">Captain</span>' : ''
         }</h2>
         <a class="profile-team" href="${escapeHtml(member.teamUrl)}" target="_blank" rel="noopener">
           <span class="dot" aria-hidden="true"></span>${escapeHtml(member.teamName)}
@@ -147,12 +171,13 @@ function buildProfile(member, data) {
       <button type="button" class="close" data-close aria-label="Close profile">&times;</button>
     </div>
 
-    <dl class="kpis">${stepStats.join('')}</dl>
-    ${targetProgress}
-    ${fundraising}
+    <dl class="kpis">${stats.join('')}</dl>
+    ${deltas.length ? dailyChart(deltas) : ''}
+    ${targetLane}
+    ${fundraisingLane}
 
     <div class="profile-links">
-      <a class="btn btn-primary" href="${escapeHtml(member.url)}" target="_blank" rel="noopener">
+      <a class="btn btn-solid" href="${escapeHtml(member.url)}" target="_blank" rel="noopener">
         Sponsor ${escapeHtml(member.name.split(' ')[0])}
       </a>
       <a class="btn" href="${escapeHtml(member.url)}" target="_blank" rel="noopener">
@@ -171,6 +196,7 @@ export function initProfiles(data) {
     if (!member) return;
     // Their team's colour drives every accent inside the dialog.
     body.style.setProperty('--accent', `var(--team-${member.teamColour})`);
+    body.style.setProperty('--lane', `var(--lane-${member.teamColour})`);
     body.innerHTML = buildProfile(member, data);
     if (!dialog.open) dialog.showModal();
     if (!fromHash) history.replaceState(null, '', `${HASH_PREFIX}${memberId}`);
@@ -181,7 +207,7 @@ export function initProfiles(data) {
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-member-id]');
     if (trigger) {
-      opener = event.target.closest('button') ?? trigger;
+      opener = trigger;
       open(trigger.dataset.memberId);
       return;
     }
