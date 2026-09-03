@@ -49,7 +49,7 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
 
 Steptember's `robots.txt` disallows `/api`, and a static page can't read `steptember.org.au` from the
 visitor's browser anyway — cross-origin requests to it are blocked. So
-`.github/workflows/update-data.yml` runs the scraper every six hours on GitHub's runners, commits any
+`.github/workflows/update-data.yml` runs the scraper every two hours on GitHub's runners, commits any
 change to `data/`, and the commit redeploys the site. The page itself only ever reads its own
 committed JSON.
 

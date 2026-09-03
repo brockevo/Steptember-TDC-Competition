@@ -2,8 +2,9 @@ name: Refresh Steptember data
 
 on:
   schedule:
-    # Every six hours. Steptember totals move a few times a day at most.
-    - cron: '0 */6 * * *'
+    # Every two hours. The job only commits when a number actually changed,
+    # so a tighter schedule costs a scrape, not a stream of empty commits.
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 # Never let two refreshes race each other onto the same branch.
