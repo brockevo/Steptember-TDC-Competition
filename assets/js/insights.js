@@ -164,53 +164,72 @@ function recordFacts(data) {
   return facts;
 }
 
+/** The kinds of comparison a card can make. No two cards may share one. */
+const FAMILIES = ['distance', 'pace', 'energy', 'target'];
+
+/** Bolds each item and joins them as "A", "A and B", "A, B and C". */
+function boldList(items) {
+  const parts = items.map((item) => `<strong>${escapeHtml(item)}</strong>`);
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`;
+}
+
 /**
- * A fun fact about one person. The template rotates with the day so the same
- * member isn't described the same way twice in a row.
+ * One comparison about one or more people. Passing several draws them into a
+ * single card rather than repeating the same comparison in separate boxes.
  */
-function spotlight(member, variant, clock) {
-  const options = [
-    {
+function spotlightCard(people, family, clock) {
+  const [first] = people;
+  const together = people.length > 1;
+  const who = boldList(people.map((member) => member.name));
+
+  const cards = {
+    distance: {
       kind: 'Distance',
-      html: `<strong>${escapeHtml(member.name)}</strong> has covered about <strong>${km(member.steps).toFixed(0)} km</strong> on foot — ${against(member.steps)}.`,
+      html: together
+        ? `${who} have walked about ${boldList(people.map((m) => `${km(m.steps).toFixed(0)} km`))} on foot — ${km(
+            people.reduce((sum, m) => sum + m.steps, 0),
+          ).toFixed(0)} km between them, ${against(people.reduce((sum, m) => sum + m.steps, 0))}.`
+        : `${who} has covered about ${boldList([`${km(first.steps).toFixed(0)} km`])} on foot — ${against(first.steps)}.`,
     },
-    {
+    pace: {
       kind: 'Pace',
-      html: `<strong>${escapeHtml(member.name)}</strong> is averaging <strong>${formatNumber(member.dailyAverage)} steps a day</strong> — the average Australian manages about ${formatNumber(AVERAGE_AUSTRALIAN_STEPS)}.`,
+      html: `${who} ${together ? 'are' : 'is'} averaging ${boldList(
+        people.map((m) => `${formatNumber(m.dailyAverage)} steps`),
+      )} a day — the average Australian manages about ${formatNumber(AVERAGE_AUSTRALIAN_STEPS)}.`,
     },
-    {
+    energy: {
       kind: 'Energy',
-      html: `<strong>${escapeHtml(member.name)}</strong> has burned roughly <strong>${formatNumber(member.steps * KCAL_PER_STEP)} calories</strong> — about ${formatNumber((member.steps * KCAL_PER_STEP) / 95)} Tim Tams' worth.`,
+      html: `${who} ${together ? 'have' : 'has'} burned roughly ${boldList(
+        people.map((m) => `${formatNumber(m.steps * KCAL_PER_STEP)} calories`),
+      )} — about ${formatNumber(
+        people.reduce((sum, m) => sum + m.steps, 0) * (KCAL_PER_STEP / 95),
+      )} Tim Tams' worth${together ? ' between them' : ''}.`,
     },
-    member.stepTarget
-      ? {
-          kind: 'On target',
-          html: `<strong>${escapeHtml(member.name)}</strong> is <strong>${formatPercent(member.targetProgress)}</strong> of the way to their own ${formatNumber(member.stepTarget)} step target, with ${clock.daysRemaining} days to go.`,
-        }
-      : null,
-  ].filter(Boolean);
+    target: {
+      kind: 'On target',
+      html: `${who} ${together ? 'are' : 'is'} ${boldList(
+        people.map((m) => formatPercent(m.targetProgress)),
+      )} of the way to ${together ? 'their own step targets' : `their own ${formatNumber(first.stepTarget)} step target`}, with ${clock.daysRemaining} days to go.`,
+    },
+  };
 
   return {
-    ...options[variant % options.length],
-    colour: member.teamColour,
-    members: [member.id],
+    ...cards[family],
+    family,
+    colour: together ? null : first.teamColour,
+    members: people.map((member) => member.id),
   };
 }
 
-/** For each team, one candidate fact per member, ordered so the pick rotates. */
-function spotlightsByTeam(data, seed) {
-  const byTeam = new Map();
-  for (const team of data.teams) {
-    const roster = [...team.members].sort((a, b) => b.steps - a.steps);
-    // Start at a different person each day so everyone gets a turn.
-    const offset = seed % roster.length;
-    const ordered = roster.map((_, index) => roster[(index + offset) % roster.length]);
-    byTeam.set(
-      team.id,
-      ordered.map((member, index) => spotlight(member, seed + index, data.clock)),
-    );
-  }
-  return byTeam;
+/** Whether a person has the figures a given comparison needs. */
+const supports = (member, family) => family !== 'target' || Boolean(member.stepTarget);
+
+/** Each team's members in a daily-rotating order, so everyone gets a turn. */
+function rosterOrder(team, seed) {
+  const roster = [...team.members].sort((a, b) => b.steps - a.steps);
+  const offset = seed % roster.length;
+  return roster.map((_, index) => roster[(index + offset) % roster.length]);
 }
 
 /** Comparisons about the whole field, naming nobody. */
@@ -220,18 +239,24 @@ function generalFacts(data) {
   const facts = [
     {
       kind: 'Distance',
+      family: 'distance',
       html: `Between them the twelve of you have covered roughly <strong>${km(totals.steps).toFixed(0)} km</strong> — ${against(totals.steps)}.`,
     },
     {
       kind: 'Energy',
+      family: 'energy',
       html: `Those steps have burned somewhere near <strong>${formatNumber(totalKcal)} calories</strong> — about ${formatNumber(totalKcal / 95)} Tim Tams' worth.`,
     },
     {
+      // Same underlying point as the calories card, so it shares that family:
+      // the rotation shows one or the other, never both on one day.
       kind: 'Energy',
+      family: 'energy',
       html: `Convert that effort to electricity and it's roughly <strong>${(totalKcal / KCAL_PER_KWH).toFixed(1)} kWh</strong> — enough to charge a phone about ${formatNumber(totalKcal / KCAL_PER_KWH / 0.011)} times.`,
     },
     {
       kind: 'Pace',
+      family: 'pace',
       html: `The group is averaging <strong>${formatNumber(totals.steps / members.length / clock.daysElapsed)} steps per person per day</strong> — the average Australian manages about ${formatNumber(AVERAGE_AUSTRALIAN_STEPS)}.`,
     },
   ];
@@ -240,6 +265,7 @@ function generalFacts(data) {
     const toTarget = Math.max(totals.stepTarget - totals.steps, 0);
     facts.push({
       kind: 'The run home',
+      family: 'runhome',
       html: `<strong>${formatNumber(toTarget)} steps</strong> still stand between everyone and the combined target — that's ${formatNumber(toTarget / clock.daysRemaining / members.length)} each per day for the ${clock.daysRemaining} days left.`,
     });
   }
@@ -258,18 +284,19 @@ export function buildInsights(data, limit = 4) {
   const seed = seedFrom(data.history.dates.at(-1) ?? 'start');
   const teamOf = (memberId) => data.membersById.get(memberId)?.teamId;
 
-  const spotlights = spotlightsByTeam(data, seed);
   const general = generalFacts(data);
   const rotatedGeneral = general.map((_, index) => general[(index + seed) % general.length]);
 
   const chosen = [];
   const usedMembers = new Set();
+  const usedFamilies = new Set();
   const coveredTeams = new Set();
 
   /** Nobody gets named twice, so a fact is only free if all its people are. */
   const free = (fact) => fact.members.every((id) => !usedMembers.has(id));
   const take = (fact) => {
     chosen.push(fact);
+    if (fact.family) usedFamilies.add(fact.family);
     for (const id of fact.members) {
       usedMembers.add(id);
       coveredTeams.add(teamOf(id));
@@ -294,17 +321,42 @@ export function buildInsights(data, limit = 4) {
   while (picked.length > 0 && picked.length + teamsMissing(picked) > limit) picked.pop();
   picked.forEach(take);
 
-  // 2. Give every remaining team somebody of its own.
+  // 2. Give every remaining team somebody of its own, each on a different
+  //    comparison — two boxes making the same point about different people
+  //    reads as a duplicate.
+  const families = FAMILIES.map((_, index) => FAMILIES[(index + seed) % FAMILIES.length]);
   for (const team of data.teams) {
     if (chosen.length >= limit || coveredTeams.has(team.id)) continue;
-    const candidate = spotlights.get(team.id).find(free);
-    if (candidate) take(candidate);
+
+    const person = rosterOrder(team, seed).find((member) => !usedMembers.has(member.id));
+    if (!person) continue;
+
+    const family = families.find((option) => !usedFamilies.has(option) && supports(person, option));
+    if (family) {
+      take(spotlightCard([person], family, data.clock));
+      continue;
+    }
+
+    // Out of distinct comparisons: rather than repeat one, fold this person
+    // into the card that already makes that point. Only a spotlight card can
+    // absorb someone — a milestone says something specific about its own people.
+    const existing = chosen.find(
+      (fact) =>
+        FAMILIES.includes(fact.family) && fact.members.length > 0 && supports(person, fact.family),
+    );
+    if (existing) {
+      const people = [...existing.members.map((id) => data.membersById.get(id)), person];
+      chosen[chosen.indexOf(existing)] = spotlightCard(people, existing.family, data.clock);
+      usedMembers.add(person.id);
+      coveredTeams.add(team.id);
+    }
   }
 
-  // 3. Fill any spare slots with the day's general comparisons.
+  // 3. Fill any spare slots with the day's general comparisons, again skipping
+  //    anything that would repeat a point already made.
   for (const fact of rotatedGeneral) {
     if (chosen.length >= limit) break;
-    take(fact);
+    if (!usedFamilies.has(fact.family)) take(fact);
   }
 
   return chosen;
