@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-02T23:18:08.336Z",
+    "lastUpdated": "2026-09-03T02:05:36.245Z",
     "dataSource": "live"
   },
   "teams": [
@@ -25,7 +25,8 @@
           "steps": 34256,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 500
+          "fundraisingGoal": 500,
+          "photo": null
         },
         {
           "id": "christophertansey",
@@ -35,17 +36,19 @@
           "steps": 20275,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 350
+          "fundraisingGoal": 350,
+          "photo": "https://d1ycj7j4cqq4r8.cloudfront.net/dfe1d82231275e9b1a0403b4ce4b773d.jpg"
         },
         {
           "id": "leannawang",
           "name": "Leanna Wang",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/leannawang",
-          "steps": 28940,
+          "steps": 33440,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 350
+          "fundraisingGoal": 350,
+          "photo": null
         },
         {
           "id": "timtaylor597740",
@@ -55,7 +58,8 @@
           "steps": 33340,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 100
+          "fundraisingGoal": 100,
+          "photo": null
         }
       ]
     },
@@ -64,7 +68,7 @@
       "name": "Finding Our Footing",
       "colour": 2,
       "url": "https://www.steptember.org.au/fundraisers/findingourfooting",
-      "raised": 0,
+      "raised": 324,
       "goal": 2000,
       "members": [
         {
@@ -75,7 +79,8 @@
           "steps": 24970,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 350
+          "fundraisingGoal": 350,
+          "photo": null
         },
         {
           "id": "dionnemarks",
@@ -84,8 +89,9 @@
           "url": "https://www.steptember.org.au/fundraisers/dionnemarks",
           "steps": 54689,
           "stepTarget": 390000,
-          "raised": 0,
-          "fundraisingGoal": 350
+          "raised": 220,
+          "fundraisingGoal": 350,
+          "photo": null
         },
         {
           "id": "emilypham596852",
@@ -94,18 +100,20 @@
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
           "steps": 46245,
           "stepTarget": 300000,
-          "raised": 0,
-          "fundraisingGoal": 255
+          "raised": 39,
+          "fundraisingGoal": 255,
+          "photo": null
         },
         {
           "id": "shivikasharma596864",
           "name": "Shivika Sharma",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/shivikasharma596864",
-          "steps": 11233,
+          "steps": 31112,
           "stepTarget": 225000,
-          "raised": 0,
-          "fundraisingGoal": 100
+          "raised": 18,
+          "fundraisingGoal": 100,
+          "photo": null
         }
       ]
     },
@@ -125,27 +133,30 @@
           "steps": 26787,
           "stepTarget": 225000,
           "raised": 0,
-          "fundraisingGoal": 100
+          "fundraisingGoal": 100,
+          "photo": null
         },
         {
           "id": "benwalker584307",
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 40772,
+          "steps": 43990,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 100
+          "fundraisingGoal": 100,
+          "photo": null
         },
         {
           "id": "chloeegle588721",
           "name": "chloe egle",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/chloeegle588721",
-          "steps": 35968,
+          "steps": 36726,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 100
+          "fundraisingGoal": 100,
+          "photo": "https://d1ycj7j4cqq4r8.cloudfront.net/61b817c468545f9140ffa02fcb308561.jpg"
         },
         {
           "id": "emmacoggin",
@@ -155,7 +166,8 @@
           "steps": 25392,
           "stepTarget": 300000,
           "raised": 0,
-          "fundraisingGoal": 350
+          "fundraisingGoal": 350,
+          "photo": null
         }
       ]
     }

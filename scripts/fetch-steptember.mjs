@@ -24,6 +24,14 @@ const TEAMS_FILE = resolve(ROOT, 'data/teams.json');
 const HISTORY_FILE = resolve(ROOT, 'data/history.json');
 
 const ORIGIN = 'https://www.steptember.org.au';
+
+/**
+ * Steptember gives everyone who hasn't uploaded a photo the same stock image.
+ * Showing that shoe twelve times says less than coloured initials do, so these
+ * are treated as "no photo". Any image shared by two or more members in a run
+ * is also treated as a default, which catches a new placeholder automatically.
+ */
+const KNOWN_DEFAULT_IMAGES = new Set(['13ru2hhxmnesk4g.png']);
 const USER_AGENT =
   'TDC-Steptember-Scoreboard/1.0 (+https://github.com/brockevo/steptember-tdc-competition)';
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -96,6 +104,9 @@ function parseTeamPage(html) {
       const name = tile.match(/class="profilename[^"]*"[^>]*>([^<]*)</i)?.[1];
       // The step count follows a "Total steps" caption inside the tile.
       const steps = toNumber(tile.match(/Total steps[\s\S]{0,300}?([\d,]{3,})/i)?.[1]);
+      // The captain's crown is a separate img, so match the profile photo class.
+      const photoTag = tile.match(/<img[^>]+class="[^"]*profile-image[^"]*"[^>]*>/i)?.[0];
+      const photo = photoTag?.match(/src="([^"]+)"/i)?.[1] ?? null;
       if (!slug || !name || steps == null) return null;
       return {
         id: slug,
@@ -103,6 +114,7 @@ function parseTeamPage(html) {
         captain: /Team captain/i.test(tile),
         url: `${ORIGIN}/fundraisers/${slug}`,
         steps,
+        photo,
       };
     })
     .filter(Boolean);
@@ -118,11 +130,36 @@ function parseTeamPage(html) {
 function parseMemberPage(html) {
   // "My target 300000 Steps" lives in the activity-tracking panel.
   const stepTarget = toNumber(html.match(/My target[\s\S]{0,200}?([\d,]{3,})\s*Steps/i)?.[1]);
+  // The page's own activity chart is fed by a small JSON report; the id in that
+  // URL is how we reach this member's day-by-day totals.
+  const activityPath = html.match(/\/profile\/report\/fitnessactivity\/(\d+)/i)?.[0];
   return {
     raised: moneyUnderHeading(html, 'Raised so far'),
     fundraisingGoal: moneyUnderHeading(html, 'My goal'),
     stepTarget,
+    activityPath,
   };
+}
+
+/**
+ * Steptember's own report of a member's running step total per day, which is
+ * what the cumulative charts are drawn from. Returns null if it can't be read,
+ * so the caller keeps whatever series is already committed.
+ */
+async function fetchSeries(activityPath) {
+  if (!activityPath) return null;
+  const response = await fetch(`${ORIGIN}${activityPath}?`, {
+    headers: { 'user-agent': USER_AGENT, accept: 'application/json, text/plain, */*' },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+  const { x: dates, steps } = JSON.parse(await response.text());
+  if (!Array.isArray(dates) || !Array.isArray(steps) || dates.length !== steps.length) {
+    throw new Error('unexpected report shape');
+  }
+  if (dates.length === 0) return null;
+  return { dates, cumulative: steps.map((value) => Number(value) || 0) };
 }
 
 /* -------------------------------------------------------------------- merging */
@@ -147,6 +184,9 @@ function mergeTeam(committed, scraped) {
       stepTarget: scrapedMember.stepTarget ?? previous.stepTarget ?? null,
       raised: scrapedMember.raised ?? previous.raised ?? 0,
       fundraisingGoal: scrapedMember.fundraisingGoal ?? previous.fundraisingGoal ?? null,
+      photo: scrapedMember.photo ?? null,
+      // Carried through for buildHistory, which strips it before teams.json.
+      series: scrapedMember.series ?? null,
     };
   });
 
@@ -160,29 +200,48 @@ function mergeTeam(committed, scraped) {
   };
 }
 
-/* ------------------------------------------------------------------- history */
+/**
+ * Clears the photo for anyone still on a stock image, so the page falls back to
+ * their coloured initials. A file two or more people share is a placeholder by
+ * definition, which keeps this working if Steptember swaps the artwork.
+ */
+function dropDefaultPhotos(teams) {
+  const uses = new Map();
+  for (const team of teams) {
+    for (const { photo } of team.members) {
+      if (photo) uses.set(photo, (uses.get(photo) ?? 0) + 1);
+    }
+  }
 
-function todayInSydney() {
-  // The teams are Australian, so days roll over on their clock, not the runner's.
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Australia/Sydney',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
+  const isDefault = (photo) =>
+    uses.get(photo) > 1 || KNOWN_DEFAULT_IMAGES.has(photo.split('/').pop());
+
+  let kept = 0;
+  for (const team of teams) {
+    for (const member of team.members) {
+      if (member.photo && isDefault(member.photo)) member.photo = null;
+      else if (member.photo) kept += 1;
+    }
+  }
+  return kept;
 }
 
-/** Records today's totals, replacing an earlier entry for the same date. */
-function recordSnapshot(history, teams) {
-  const date = todayInSydney();
+/* ------------------------------------------------------------------- history */
+
+/**
+ * Collects each member's day-by-day series, keeping the committed one for
+ * anyone whose report can't be read this run.
+ */
+function buildHistory(previous, teams) {
   const members = {};
   for (const team of teams) {
-    for (const member of team.members) members[member.id] = member.steps;
+    for (const member of team.members) {
+      const series = member.series ?? previous.members?.[member.id];
+      if (series) members[member.id] = series;
+      delete member.series; // Lives in history.json, not teams.json.
+    }
   }
-  const snapshots = history.snapshots.filter((snapshot) => snapshot.date !== date);
-  snapshots.push({ date, members });
-  snapshots.sort((a, b) => a.date.localeCompare(b.date));
-  return { snapshots };
+  return { updated: new Date().toISOString(), members };
 }
 
 /* ---------------------------------------------------------------------- main */
@@ -205,10 +264,13 @@ async function main() {
       for (const member of scraped.members) {
         await wait(POLITE_DELAY_MS);
         try {
-          Object.assign(member, parseMemberPage(await fetchPage(member.url)));
+          const profile = parseMemberPage(await fetchPage(member.url));
+          Object.assign(member, profile);
+          member.series = await fetchSeries(profile.activityPath);
         } catch (error) {
           console.warn(`  ! ${member.name}: profile unavailable (${error.message})`);
         }
+        delete member.activityPath;
       }
 
       updated.push(mergeTeam(committed, scraped));
@@ -230,6 +292,9 @@ async function main() {
     process.exit(1);
   }
 
+  const withPhotos = dropDefaultPhotos(updated);
+  console.log(`\n${withPhotos} of ${updated.flatMap((t) => t.members).length} members have a profile photo.`);
+
   const nextTeams = {
     ...teamsData,
     competition: {
@@ -239,13 +304,13 @@ async function main() {
     },
     teams: updated,
   };
-  const nextHistory = recordSnapshot(history, updated);
+  const nextHistory = buildHistory(history, updated);
 
-  // Compare without lastUpdated, so an unchanged scrape doesn't churn a commit.
+  // Compare without the timestamps, so an unchanged scrape doesn't churn a commit.
+  const withoutStamp = (teams) => JSON.stringify({ ...teams, competition: { ...teams.competition, lastUpdated: null } });
   const unchanged =
-    JSON.stringify({ ...nextTeams, competition: { ...nextTeams.competition, lastUpdated: null } }) ===
-      JSON.stringify({ ...teamsData, competition: { ...teamsData.competition, lastUpdated: null } }) &&
-    JSON.stringify(nextHistory) === JSON.stringify(history);
+    withoutStamp(nextTeams) === withoutStamp(teamsData) &&
+    JSON.stringify(nextHistory.members) === JSON.stringify(history.members ?? {});
 
   if (DRY_RUN) {
     console.log(unchanged ? '\n[dry run] no changes' : '\n[dry run] changes detected, nothing written');

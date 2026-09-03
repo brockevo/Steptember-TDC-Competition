@@ -42,14 +42,22 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
   run carries on. The whole run only fails if *every* team was unreachable.
 - Members are matched on their Steptember profile slug, so renaming a profile doesn't create a
   duplicate.
-- `data/history.json` gets one dated snapshot per day, which is what makes "best day" and "latest
-  day" possible — Steptember itself only publishes a running total.
+- Profile photos are picked up automatically. Steptember gives everyone who hasn't uploaded one the
+  same stock image, so any picture shared by two or more members is treated as a placeholder and
+  discarded — those people get coloured initials instead. Photos are hotlinked from Steptember's
+  CDN, so they stay current; if one ever fails to load the page falls back to the initials.
+- `data/history.json` holds each member's running step total per day, read from the small JSON
+  report that feeds Steptember's own activity chart. That is what the cumulative line charts are
+  drawn from, and it goes back to 1 September rather than starting the day this was set up.
+  Members report on different days, so the site carries each person's last known total forward when
+  summing a team or the whole field — otherwise a day where somebody hadn't synced would show the
+  group's total dropping.
 
 ### Why a scheduled job rather than a live API
 
 Steptember's `robots.txt` disallows `/api`, and a static page can't read `steptember.org.au` from the
 visitor's browser anyway — cross-origin requests to it are blocked. So
-`.github/workflows/update-data.yml` runs the scraper every six hours on GitHub's runners, commits any
+`.github/workflows/update-data.yml` runs the scraper every two hours on GitHub's runners, commits any
 change to `data/`, and the commit redeploys the site. The page itself only ever reads its own
 committed JSON.
 
@@ -81,9 +89,11 @@ assets/css/styles.css       design tokens, light/dark, responsive layout
 assets/js/data.js           loads the JSON and derives every figure shown
 assets/js/app.js            renders the hero, standings, team cards and leaderboards
 assets/js/member.js         the member profile dialog
+assets/js/chart.js          the cumulative step charts, as inline SVG
+assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets
-data/history.json           dated daily snapshots, appended by the scraper
+data/history.json           each member's running step total per day
 scripts/fetch-steptember.mjs  the scraper
 ```
 
