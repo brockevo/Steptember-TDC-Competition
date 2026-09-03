@@ -42,6 +42,10 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
   run carries on. The whole run only fails if *every* team was unreachable.
 - Members are matched on their Steptember profile slug, so renaming a profile doesn't create a
   duplicate.
+- Profile photos are picked up automatically. Steptember gives everyone who hasn't uploaded one the
+  same stock image, so any picture shared by two or more members is treated as a placeholder and
+  discarded — those people get coloured initials instead. Photos are hotlinked from Steptember's
+  CDN, so they stay current; if one ever fails to load the page falls back to the initials.
 - `data/history.json` gets one dated snapshot per day, which is what makes "best day" and "latest
   day" possible — Steptember itself only publishes a running total.
 
@@ -81,6 +85,7 @@ assets/css/styles.css       design tokens, light/dark, responsive layout
 assets/js/data.js           loads the JSON and derives every figure shown
 assets/js/app.js            renders the hero, standings, team cards and leaderboards
 assets/js/member.js         the member profile dialog
+assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets
 data/history.json           dated daily snapshots, appended by the scraper

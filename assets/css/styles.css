@@ -581,8 +581,11 @@ a {
   background: var(--sunk);
 }
 
-/* Initials in the team's colour — the avatar row, without hotlinking photos. */
+/* Their Steptember photo where they have one; initials in the team's colour
+   otherwise. The initials sit underneath, so a photo that fails to load simply
+   reveals them rather than leaving a broken image. */
 .avatar {
+  position: relative;
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -594,7 +597,17 @@ a {
   font-weight: 800;
   letter-spacing: -0.01em;
   flex: none;
+  overflow: hidden;
   box-shadow: 0 0 0 3px var(--surface);
+}
+
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .avatar.sm {

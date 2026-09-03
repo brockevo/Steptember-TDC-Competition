@@ -5,12 +5,12 @@
  * day-by-day history we don't have yet is left out rather than filled in.
  */
 
+import { avatar } from './ui.js';
 import {
   escapeHtml,
   formatMoney,
   formatNumber,
   formatPercent,
-  initials,
   ordinal,
   plural,
 } from './format.js';
@@ -159,7 +159,7 @@ function buildProfile(member, data) {
 
   return `
     <div class="profile-head">
-      <span class="avatar lg" aria-hidden="true">${escapeHtml(initials(member.name))}</span>
+      ${avatar(member, 'lg')}
       <div>
         <h2 id="profile-name">${escapeHtml(member.name)}${
           member.captain ? '<span class="captain-tag">Captain</span>' : ''

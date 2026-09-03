@@ -2,21 +2,16 @@
 
 import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
+import { accentFor, avatar, handleBrokenAvatars, laneFor } from './ui.js';
 import {
   escapeHtml,
   formatDateTime,
   formatMoney,
   formatNumber,
   formatPercent,
-  initials,
   ordinal,
   plural,
 } from './format.js';
-
-/** Solid team colour, for avatars, dots, borders and buttons. */
-const accentFor = (colour) => `--accent: var(--team-${colour})`;
-/** Lighter step of the same hue, for lane fills that carry a label on top. */
-const laneFor = (colour) => `--lane: var(--lane-${colour})`;
 
 const clampPercent = (fraction) => `${(Math.max(0, Math.min(1, fraction || 0)) * 100).toFixed(1)}%`;
 
@@ -41,12 +36,6 @@ function lane({ colour, title, figure, fraction, meta }) {
 
 function rankChip(rank) {
   return `<span class="rank-chip${rank === 1 ? ' first' : ''}">${ordinal(rank)}</span>`;
-}
-
-function avatar(member, extraClass = '') {
-  return `<span class="avatar ${extraClass}" style="${accentFor(member.teamColour)}" aria-hidden="true">${escapeHtml(
-    initials(member.name),
-  )}</span>`;
 }
 
 /* ------------------------------------------------------------------- hero -- */
@@ -349,6 +338,7 @@ function renderFooter(data) {
 
 async function start() {
   try {
+    handleBrokenAvatars();
     const data = await loadCompetition();
     renderHero(data);
     renderStandings(data);

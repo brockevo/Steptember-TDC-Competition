@@ -24,6 +24,14 @@ const TEAMS_FILE = resolve(ROOT, 'data/teams.json');
 const HISTORY_FILE = resolve(ROOT, 'data/history.json');
 
 const ORIGIN = 'https://www.steptember.org.au';
+
+/**
+ * Steptember gives everyone who hasn't uploaded a photo the same stock image.
+ * Showing that shoe twelve times says less than coloured initials do, so these
+ * are treated as "no photo". Any image shared by two or more members in a run
+ * is also treated as a default, which catches a new placeholder automatically.
+ */
+const KNOWN_DEFAULT_IMAGES = new Set(['13ru2hhxmnesk4g.png']);
 const USER_AGENT =
   'TDC-Steptember-Scoreboard/1.0 (+https://github.com/brockevo/steptember-tdc-competition)';
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -96,6 +104,9 @@ function parseTeamPage(html) {
       const name = tile.match(/class="profilename[^"]*"[^>]*>([^<]*)</i)?.[1];
       // The step count follows a "Total steps" caption inside the tile.
       const steps = toNumber(tile.match(/Total steps[\s\S]{0,300}?([\d,]{3,})/i)?.[1]);
+      // The captain's crown is a separate img, so match the profile photo class.
+      const photoTag = tile.match(/<img[^>]+class="[^"]*profile-image[^"]*"[^>]*>/i)?.[0];
+      const photo = photoTag?.match(/src="([^"]+)"/i)?.[1] ?? null;
       if (!slug || !name || steps == null) return null;
       return {
         id: slug,
@@ -103,6 +114,7 @@ function parseTeamPage(html) {
         captain: /Team captain/i.test(tile),
         url: `${ORIGIN}/fundraisers/${slug}`,
         steps,
+        photo,
       };
     })
     .filter(Boolean);
@@ -147,6 +159,7 @@ function mergeTeam(committed, scraped) {
       stepTarget: scrapedMember.stepTarget ?? previous.stepTarget ?? null,
       raised: scrapedMember.raised ?? previous.raised ?? 0,
       fundraisingGoal: scrapedMember.fundraisingGoal ?? previous.fundraisingGoal ?? null,
+      photo: scrapedMember.photo ?? null,
     };
   });
 
@@ -158,6 +171,32 @@ function mergeTeam(committed, scraped) {
     goal: scraped.goal ?? committed.goal,
     members,
   };
+}
+
+/**
+ * Clears the photo for anyone still on a stock image, so the page falls back to
+ * their coloured initials. A file two or more people share is a placeholder by
+ * definition, which keeps this working if Steptember swaps the artwork.
+ */
+function dropDefaultPhotos(teams) {
+  const uses = new Map();
+  for (const team of teams) {
+    for (const { photo } of team.members) {
+      if (photo) uses.set(photo, (uses.get(photo) ?? 0) + 1);
+    }
+  }
+
+  const isDefault = (photo) =>
+    uses.get(photo) > 1 || KNOWN_DEFAULT_IMAGES.has(photo.split('/').pop());
+
+  let kept = 0;
+  for (const team of teams) {
+    for (const member of team.members) {
+      if (member.photo && isDefault(member.photo)) member.photo = null;
+      else if (member.photo) kept += 1;
+    }
+  }
+  return kept;
 }
 
 /* ------------------------------------------------------------------- history */
@@ -229,6 +268,9 @@ async function main() {
     console.error('Every team failed to update — leaving all data untouched.');
     process.exit(1);
   }
+
+  const withPhotos = dropDefaultPhotos(updated);
+  console.log(`\n${withPhotos} of ${updated.flatMap((t) => t.members).length} members have a profile photo.`);
 
   const nextTeams = {
     ...teamsData,
