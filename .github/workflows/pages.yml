@@ -3,6 +3,13 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # The scheduled refresh commits using the default GITHUB_TOKEN, and GitHub
+  # deliberately does not start workflows from such pushes — otherwise a
+  # workflow could trigger itself forever. Without this trigger the new figures
+  # land in the repo but never reach the site.
+  workflow_run:
+    workflows: ['Refresh Steptember data']
+    types: [completed]
   workflow_dispatch:
 
 # Allow one deployment at a time; let a running one finish rather than cancelling it.
@@ -18,11 +25,17 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # A failed refresh commits nothing, so there is nothing new to publish.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # A workflow_run event starts from the commit that triggered the
+          # refresh, which predates the commit holding the new figures.
+          ref: main
 
       - uses: actions/configure-pages@v5
 
@@ -34,7 +47,9 @@ jobs:
       - name: Stamp asset URLs with the commit SHA
         run: |
           set -euo pipefail
-          V="${GITHUB_SHA::12}"
+          # Take the SHA of what was actually checked out: on a workflow_run
+          # event GITHUB_SHA points at the older triggering commit.
+          V="$(git rev-parse --short=12 HEAD)"
 
           # '#' as the delimiter: the alternation below contains '|'.
           sed -i -E "s#(assets/(css/styles\.css|js/app\.js))\"#\1?v=$V\"#g" index.html
