@@ -72,37 +72,70 @@ function rank(entries, valueOf) {
   return { byId, leader, total };
 }
 
-/** Turns dated cumulative snapshots into per-member daily step deltas. */
-function buildHistory(snapshots) {
-  const days = [...(snapshots ?? [])].sort((a, b) => a.date.localeCompare(b.date));
-  const deltasByMember = new Map();
+const isoDate = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-  for (let index = 1; index < days.length; index += 1) {
-    const previous = days[index - 1].members ?? {};
-    const current = days[index].members ?? {};
-    for (const [memberId, total] of Object.entries(current)) {
-      if (!(memberId in previous)) continue;
-      const delta = total - previous[memberId];
-      if (delta < 0) continue; // A correction downwards isn't a day's walking.
-      if (!deltasByMember.has(memberId)) deltasByMember.set(memberId, []);
-      deltasByMember.get(memberId).push({ date: days[index].date, steps: delta });
-    }
+/**
+ * Puts every member's day-by-day totals on one shared September axis.
+ *
+ * Members report on different days — someone who hasn't synced since Tuesday
+ * has a shorter series than someone who synced this morning. Since the figures
+ * are running totals, a missing day carries the previous value forward, which
+ * is what makes team and overall sums add up correctly on every date.
+ */
+function buildHistory(historyMembers, clock) {
+  const series = historyMembers ?? {};
+  const allDates = Object.values(series).flatMap((entry) => entry.dates ?? []);
+  if (allDates.length === 0) {
+    return { dates: [], alignedFor: () => [], deltasFor: () => [], hasData: false };
   }
 
-  return {
-    dayCount: days.length,
-    hasDailyData: days.length >= 2,
-    deltasFor: (memberId) => deltasByMember.get(memberId) ?? [],
+  // Run from the first of the month to the last day anyone has reported.
+  const lastDate = allDates.reduce((latest, date) => (date > latest ? date : latest));
+  const dates = [];
+  for (let day = new Date(clock.start); isoDate(day) <= lastDate; day.setDate(day.getDate() + 1)) {
+    dates.push(isoDate(day));
+  }
+
+  const aligned = new Map();
+  for (const [memberId, entry] of Object.entries(series)) {
+    const byDate = new Map(entry.dates.map((date, index) => [date, entry.cumulative[index]]));
+    let carried = 0;
+    aligned.set(
+      memberId,
+      dates.map((date) => {
+        // Running totals only ever hold or rise; ignore a downward correction.
+        carried = Math.max(byDate.get(date) ?? carried, carried);
+        return carried;
+      }),
+    );
+  }
+
+  const alignedFor = (memberId) => aligned.get(memberId) ?? dates.map(() => 0);
+
+  /** Sums a set of members into one cumulative line. */
+  const sumFor = (memberIds) =>
+    dates.map((_, index) =>
+      memberIds.reduce((total, memberId) => total + (alignedFor(memberId)[index] ?? 0), 0),
+    );
+
+  const deltasFor = (memberId) => {
+    const values = alignedFor(memberId);
+    return values
+      .map((value, index) => ({ date: dates[index], steps: value - (values[index - 1] ?? 0) }))
+      .filter((day) => day.steps > 0);
   };
+
+  return { dates, alignedFor, sumFor, deltasFor, hasData: dates.length > 0 };
 }
 
 export async function loadCompetition() {
   const teamsData = await loadJson('data/teams.json');
-  const historyData = await loadJson('data/history.json', { snapshots: [] });
+  const historyData = await loadJson('data/history.json', { members: {} });
 
   const { competition } = teamsData;
   const clock = buildClock(competition);
-  const history = buildHistory(historyData.snapshots);
+  const history = buildHistory(historyData.members, clock);
 
   // --- teams -----------------------------------------------------------------
   const teams = teamsData.teams.map((team) => {
@@ -166,6 +199,7 @@ export async function loadCompetition() {
       distanceKm: (member.steps * METRES_PER_STEP) / 1000,
       gapToPersonAbove: personAbove ? personAbove.steps - member.steps : 0,
       personAbove: personAbove?.name ?? null,
+      cumulative: history.alignedFor(member.id),
       lastDay: deltas.at(-1) ?? null,
       bestDay: deltas.length
         ? deltas.reduce((best, day) => (day.steps > best.steps ? day : best))
@@ -185,6 +219,9 @@ export async function loadCompetition() {
     stepsPerMemberPerDay:
       team.memberCount > 0 ? team.steps / team.memberCount / clock.daysElapsed : 0,
     projectedSteps: Math.round((team.steps / clock.daysElapsed) * clock.totalDays),
+    cumulative: history.sumFor?.(team.members.map((member) => member.id)) ?? [],
+    // What the whole team is aiming at, for the pace line on their chart.
+    stepTarget: team.members.reduce((sum, member) => sum + (member.stepTarget ?? 0), 0),
     members: team.members.map((member) => membersById.get(member.id)),
   }));
 
@@ -205,6 +242,8 @@ export async function loadCompetition() {
       raised: moneyRanks.total,
       goal: teamsWithStats.reduce((sum, team) => sum + (team.goal ?? 0), 0),
       memberCount: members.length,
+      cumulative: history.sumFor?.(members.map((member) => member.id)) ?? [],
+      stepTarget: members.reduce((sum, member) => sum + (member.stepTarget ?? 0), 0),
     },
     standings: {
       stepLeaders,

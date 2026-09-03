@@ -46,8 +46,12 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
   same stock image, so any picture shared by two or more members is treated as a placeholder and
   discarded — those people get coloured initials instead. Photos are hotlinked from Steptember's
   CDN, so they stay current; if one ever fails to load the page falls back to the initials.
-- `data/history.json` gets one dated snapshot per day, which is what makes "best day" and "latest
-  day" possible — Steptember itself only publishes a running total.
+- `data/history.json` holds each member's running step total per day, read from the small JSON
+  report that feeds Steptember's own activity chart. That is what the cumulative line charts are
+  drawn from, and it goes back to 1 September rather than starting the day this was set up.
+  Members report on different days, so the site carries each person's last known total forward when
+  summing a team or the whole field — otherwise a day where somebody hadn't synced would show the
+  group's total dropping.
 
 ### Why a scheduled job rather than a live API
 
@@ -85,10 +89,11 @@ assets/css/styles.css       design tokens, light/dark, responsive layout
 assets/js/data.js           loads the JSON and derives every figure shown
 assets/js/app.js            renders the hero, standings, team cards and leaderboards
 assets/js/member.js         the member profile dialog
+assets/js/chart.js          the cumulative step charts, as inline SVG
 assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets
-data/history.json           dated daily snapshots, appended by the scraper
+data/history.json           each member's running step total per day
 scripts/fetch-steptember.mjs  the scraper
 ```
 

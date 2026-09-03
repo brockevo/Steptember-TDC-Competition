@@ -6,6 +6,7 @@
  */
 
 import { avatar } from './ui.js';
+import { chartBlock } from './chart.js';
 import {
   escapeHtml,
   formatMoney,
@@ -172,6 +173,19 @@ function buildProfile(member, data) {
     </div>
 
     <dl class="kpis">${stats.join('')}</dl>
+    ${chartBlock({
+      title: 'Cumulative steps',
+      values: member.cumulative,
+      totalDays: clock.totalDays,
+      target: member.stepTarget,
+      colour: `var(--team-${member.teamColour})`,
+      label: `${member.name}'s cumulative steps through September, currently ${formatNumber(member.steps)}${
+        member.stepTarget ? ` against a ${formatNumber(member.stepTarget)} step target` : ''
+      }`,
+      note: member.stepTarget
+        ? `Dashed line is the pace to their ${formatNumber(member.stepTarget)} step target.`
+        : null,
+    })}
     ${deltas.length ? dailyChart(deltas) : ''}
     ${targetLane}
     ${fundraisingLane}

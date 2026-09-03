@@ -3,6 +3,7 @@
 import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
 import { accentFor, avatar, handleBrokenAvatars, laneFor } from './ui.js';
+import { chartBlock } from './chart.js';
 import {
   escapeHtml,
   formatDateTime,
@@ -229,6 +230,16 @@ function renderTeams(data) {
           </div>
         </div>
 
+        ${chartBlock({
+          title: 'Cumulative steps',
+          values: team.cumulative,
+          totalDays: data.clock.totalDays,
+          target: team.stepTarget,
+          colour: `var(--team-${team.colour})`,
+          label: `${team.name} cumulative steps through September, currently ${formatNumber(team.steps)} against a combined target of ${formatNumber(team.stepTarget)}`,
+          note: `Dashed line is the pace to their combined ${formatNumber(team.stepTarget)} step target.`,
+        })}
+
         <p class="roster-title">Team roster</p>
         <ul class="roster">
           ${[...team.members]
@@ -275,6 +286,25 @@ function renderLadder({ title, subtitle, members, valueOf, body }) {
   </article>`;
 }
 
+/** Everyone's steps combined, as one cumulative line across September. */
+function renderOverallChart(data) {
+  const { totals, clock } = data;
+  return `<article class="card">
+    <div class="board-head">
+      <h3>Everyone combined</h3><span class="eyebrow">All 12 steppers</span>
+    </div>
+    ${chartBlock({
+      title: 'Cumulative steps, all teams',
+      values: totals.cumulative,
+      totalDays: clock.totalDays,
+      target: totals.stepTarget,
+      colour: 'var(--brand)',
+      label: `Combined cumulative steps for all ${totals.memberCount} participants through September, currently ${formatNumber(totals.steps)} against a combined target of ${formatNumber(totals.stepTarget)}`,
+      note: `Dashed line is the pace to everyone's combined ${formatNumber(totals.stepTarget)} step target.`,
+    })}
+  </article>`;
+}
+
 function renderLadders(data) {
   const { competition, standings } = data;
 
@@ -285,6 +315,9 @@ function renderLadders(data) {
       members: [...data.members].sort((a, b) => b.steps - a.steps),
       valueOf: (member) => formatNumber(member.steps),
     }) +
+    // The right column stacks the fundraiser ladder above the overall chart,
+    // which is what puts the chart in the bottom-right of the page.
+    `<div class="ladder-column">` +
     renderLadder({
       title: 'Top fundraisers',
       subtitle: 'All teams',
@@ -307,7 +340,9 @@ function renderLadders(data) {
                )
                .join('')}
            </div>`,
-    });
+    }) +
+    renderOverallChart(data) +
+    `</div>`;
 }
 
 /* ----------------------------------------------------------------- footer -- */

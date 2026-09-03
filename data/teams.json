@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-03T01:48:23.720Z",
+    "lastUpdated": "2026-09-03T02:05:36.245Z",
     "dataSource": "live"
   },
   "teams": [
@@ -44,7 +44,7 @@
           "name": "Leanna Wang",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/leannawang",
-          "steps": 28940,
+          "steps": 33440,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
