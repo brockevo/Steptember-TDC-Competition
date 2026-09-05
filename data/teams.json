@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-05T13:20:34.828Z",
+    "lastUpdated": "2026-09-05T14:10:51.967Z",
     "dataSource": "live"
   },
   "teams": [
@@ -55,7 +55,7 @@
           "name": "Tim Taylor",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/timtaylor597740",
-          "steps": 51688,
+          "steps": 61840,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
