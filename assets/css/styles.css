@@ -179,6 +179,16 @@ a {
   color: inherit;
 }
 
+/*
+ * The browser's own `[hidden] { display: none }` is the weakest rule there is,
+ * so any element given a `display` here would keep showing while hidden. The
+ * views, the error banner and the chart tooltips are all toggled by that
+ * attribute, hence stating it once, forcefully, rather than per component.
+ */
+[hidden] {
+  display: none !important;
+}
+
 .wrap {
   max-width: var(--page-max);
   margin-inline: auto;
