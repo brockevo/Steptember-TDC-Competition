@@ -8,6 +8,9 @@ September 2026:
 
 The teams: **Walkoholics**, **Finding Our Footing**, and **Escalated to the Stepping Committee**.
 
+The site has three pages: **Teams** (standings and team cards), **Leaderboard** (individual ladders,
+podiums and the combined chart) and **Profile** (your own progress).
+
 Every participant is clickable — their profile shows daily average, progress against their own step
 target, a projection for the end of the month, how many steps a day they need from here, their share
 of the team's total, and more.
@@ -89,6 +92,11 @@ assets/css/styles.css       design tokens, light/dark, responsive layout
 assets/js/data.js           loads the JSON and derives every figure shown
 assets/js/app.js            renders the hero, standings, team cards and leaderboards
 assets/js/member.js         the member profile dialog
+assets/js/profile.js        the Profile page: pick yourself, baseline, before-and-after
+assets/js/stats.js          the stat blocks shared by the dialog and the Profile page
+assets/js/router.js         switches between the three pages
+assets/js/insights.js       the fun facts and milestones
+assets/js/podium.js         the top-three podiums
 assets/js/chart.js          the cumulative step charts, as inline SVG
 assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
@@ -96,6 +104,28 @@ data/teams.json             source of truth: teams, members, steps, raised, targ
 data/history.json           each member's running step total per day
 scripts/fetch-steptember.mjs  the scraper
 ```
+
+## The Profile page, and what it stores
+
+The Profile page lets someone pick themselves from the roster and enter roughly how many steps they
+did on a normal day before September. The page then shows their September against that baseline.
+
+**All of it stays in the viewer's own browser**, under a single `localStorage` key,
+`steptember:me`. It holds the chosen member id and the baseline answers, nothing else.
+
+There is no server to send it to. The site is a folder of static files on GitHub Pages, with no
+backend, no analytics, no cookies, no accounts, and no IP addresses or device identifiers recorded
+anywhere. "Forget me on this device" clears the key, and so does clearing site data.
+
+Storage can be unavailable — private browsing, or a browser set to block it. Every read and write is
+wrapped in `try`/`catch`; when it fails the page still works for the visit and says plainly that the
+answers will be forgotten when the tab closes.
+
+One caveat worth knowing: profile photos are hotlinked from Steptember's image CDN, so loading any
+page that shows one makes a request to that CDN from the viewer's browser. Nothing about the viewer
+or their answers is sent with it (the images carry `referrerpolicy="no-referrer"`), but the request
+itself is visible to that CDN like any third-party image. Committing the photos to this repository
+instead would remove even that.
 
 ## A note on accuracy
 

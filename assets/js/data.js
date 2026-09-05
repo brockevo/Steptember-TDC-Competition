@@ -221,6 +221,7 @@ export async function loadCompetition() {
       overallMoneyRank: money.rank,
       teamStepRank:
         teamMates.filter((other) => other.steps > member.steps).length + 1,
+      teamSize: teamMates.length,
       shareOfTeamSteps: member.teamSteps > 0 ? member.steps / member.teamSteps : 0,
       shareOfTeamRaised: member.teamRaised > 0 ? (member.raised ?? 0) / member.teamRaised : 0,
       dailyAverage,
