@@ -9,15 +9,18 @@ export const accentFor = (colour) => `--accent: var(--team-${colour})`;
 export const laneFor = (colour) => `--lane: var(--lane-${colour})`;
 
 /**
- * Their Steptember photo when they have one, initials otherwise. The initials
- * stay in the markup underneath as the fallback if the image doesn't load.
+ * A Steptember photo when there is one, initials otherwise. Works for a person
+ * or a team — a team carries its colour directly, a person carries their team's.
+ * The initials stay in the markup underneath as the fallback if the image
+ * doesn't load.
  */
-export function avatar(member, extraClass = '') {
-  const photo = member.photo
-    ? `<img src="${escapeHtml(member.photo)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
+export function avatar(entity, extraClass = '') {
+  const photo = entity.photo
+    ? `<img src="${escapeHtml(entity.photo)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
     : '';
-  return `<span class="avatar ${extraClass}" style="${accentFor(member.teamColour)}" aria-hidden="true">${escapeHtml(
-    initials(member.name),
+  const colour = entity.teamColour ?? entity.colour;
+  return `<span class="avatar ${extraClass}" style="${accentFor(colour)}" aria-hidden="true">${escapeHtml(
+    initials(entity.name),
   )}${photo}</span>`;
 }
 

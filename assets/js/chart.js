@@ -26,6 +26,7 @@ let uid = 0;
  */
 export function cumulativeChart({
   values,
+  dates,
   totalDays,
   target,
   colour,
@@ -86,11 +87,62 @@ export function cumulativeChart({
     <circle cx="${x(points.length - 1).toFixed(1)}" cy="${y(latest).toFixed(1)}" r="4"
             fill="${colour}" stroke="var(--surface)" stroke-width="2" />
     ${ticks}
+
+    <g class="chart-hits">${hitBands({ points, dates, totalDays, x, y, height })}</g>
+    <circle class="chart-cursor" r="5" fill="${colour}" stroke="var(--surface)"
+            stroke-width="2" opacity="0" />
   </svg>`;
 }
 
+/**
+ * One transparent full-height band per day with data, carrying that day's
+ * figures so the tooltip is a lookup rather than a re-derivation.
+ */
+function hitBands({ points, dates, totalDays, x, y, height }) {
+  const slot = (x(1) - x(0)) || 8;
+
+  return points
+    .map((total, index) => {
+      const previous = index > 0 ? points[index - 1] : 0;
+      const stepsToday = total - previous;
+
+      // What that day added to the running total. Day one has nothing before
+      // it, so there is no "increase" to state.
+      const added = index > 0 && previous > 0 ? (stepsToday / previous) * 100 : null;
+
+      // Projections both come from the same pace arithmetic the stats use:
+      // running total over days elapsed, carried to the end of the month.
+      const projection = (total / (index + 1)) * totalDays;
+      const before = index > 0 ? (previous / index) * totalDays : null;
+      const shift = before ? ((projection - before) / before) * 100 : null;
+
+      return `<rect x="${(x(index) - slot / 2).toFixed(1)}" y="0"
+                    width="${slot.toFixed(1)}" height="${height}"
+                    fill="transparent"
+                    data-date="${escapeHtml(dates?.[index] ?? '')}"
+                    data-steps="${Math.round(stepsToday)}"
+                    data-total="${Math.round(total)}"
+                    data-added="${added === null ? '' : added.toFixed(1)}"
+                    data-projection="${Math.round(projection)}"
+                    data-shift="${shift === null ? '' : shift.toFixed(1)}"
+                    data-cx="${x(index).toFixed(1)}"
+                    data-cy="${y(total).toFixed(1)}" />`;
+    })
+    .join('');
+}
+
 /** The chart plus its heading and latest figure, as one card body. */
-export function chartBlock({ title, values, totalDays, target, colour, label, note, wide = false }) {
+export function chartBlock({
+  title,
+  values,
+  dates,
+  totalDays,
+  target,
+  colour,
+  label,
+  note,
+  wide = false,
+}) {
   const latest = (values ?? []).at(-1) ?? 0;
   // A wider viewBox for the full-page chart: at the same 340x150 ratio a
   // 1200px-wide card would be over 500px tall. 3:1 keeps it a sensible height
@@ -101,7 +153,77 @@ export function chartBlock({ title, values, totalDays, target, colour, label, no
       <span class="chart-title">${escapeHtml(title)}</span>
       <strong class="chart-latest">${formatNumber(latest)}</strong>
     </div>
-    ${cumulativeChart({ values, totalDays, target, colour, label, ...size })}
+    ${cumulativeChart({ values, dates, totalDays, target, colour, label, ...size })}
+    <div class="chart-tip" hidden></div>
     ${note ? `<p class="chart-note">${escapeHtml(note)}</p>` : ''}
   </div>`;
+}
+
+/**
+ * Wires every chart on the page for hover and tap. Delegated from the document
+ * so charts rendered later need no extra setup.
+ */
+export function initChartTooltips() {
+  const show = (band) => {
+    const block = band.closest('.chart-block');
+    const svg = band.closest('svg');
+    const tip = block?.querySelector('.chart-tip');
+    if (!tip || !svg) return;
+
+    const { date, steps, added, projection, shift } = band.dataset;
+    const when = date
+      ? new Date(`${date}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
+      : '';
+
+    const rise = added ? ` · <span class="tip-up">+${added}%</span> on the total` : '';
+    const forecast = shift
+      ? `Projected finish ${Number(shift) >= 0 ? 'up' : 'down'} <strong>${Math.abs(Number(shift)).toFixed(1)}%</strong> to ${formatNumber(projection)}`
+      : `First day — no earlier projection to compare`;
+
+    tip.innerHTML = `<span class="tip-day">${escapeHtml(when)}</span>
+      <span><strong>${formatNumber(steps)}</strong> steps${rise}</span>
+      <span class="tip-forecast">${forecast}</span>`;
+    tip.hidden = false;
+
+    // The band's coordinates are in viewBox units; scale them to the rendered
+    // size so the tooltip lands on the point at any width.
+    const box = svg.getBoundingClientRect();
+    const scale = box.width / svg.viewBox.baseVal.width;
+    const left = Number(band.dataset.cx) * scale;
+    tip.style.left = `${Math.max(tip.offsetWidth / 2 + 4, Math.min(left, box.width - tip.offsetWidth / 2 - 4))}px`;
+    tip.style.top = `${Number(band.dataset.cy) * scale}px`;
+
+    const cursor = svg.querySelector('.chart-cursor');
+    if (cursor) {
+      cursor.setAttribute('cx', band.dataset.cx);
+      cursor.setAttribute('cy', band.dataset.cy);
+      cursor.setAttribute('opacity', '1');
+    }
+  };
+
+  const hide = (block) => {
+    block.querySelector('.chart-tip').hidden = true;
+    block.querySelector('.chart-cursor')?.setAttribute('opacity', '0');
+  };
+
+  document.addEventListener('pointerover', (event) => {
+    const band = event.target.closest?.('.chart-hits rect');
+    if (band) show(band);
+  });
+
+  // Taps don't produce a hover, so drive it from the press as well.
+  document.addEventListener('pointerdown', (event) => {
+    const band = event.target.closest?.('.chart-hits rect');
+    if (band) show(band);
+    else for (const block of document.querySelectorAll('.chart-block')) hide(block);
+  });
+
+  document.addEventListener('pointerout', (event) => {
+    // A touch pointer stops existing the moment the finger lifts, firing this
+    // straight after the tap — which would hide the tooltip before it was read.
+    // Touch dismisses by tapping elsewhere instead, handled above.
+    if (event.pointerType !== 'mouse') return;
+    const block = event.target.closest?.('.chart-block');
+    if (block && !block.contains(event.relatedTarget)) hide(block);
+  });
 }

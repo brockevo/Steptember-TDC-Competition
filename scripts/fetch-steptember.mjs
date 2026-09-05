@@ -119,10 +119,14 @@ function parseTeamPage(html) {
     })
     .filter(Boolean);
 
+  // The team's own picture sits in the page header, above the member tiles.
+  const header = html.match(/profile-image-header[\s\S]{0,400}?<img[^>]+src="([^"]+)"/i);
+
   return {
     name: textOf(html.match(/<title>\s*Steptember\s*-\s*([^<]*)<\/title>/i)?.[1] ?? ''),
     raised: moneyUnderHeading(html, 'Raised so far'),
     goal: moneyUnderHeading(html, 'Our Goal'),
+    photo: header?.[1] ?? null,
     members,
   };
 }
@@ -194,6 +198,7 @@ function mergeTeam(committed, scraped) {
     ...committed,
     // Team display names stay ours: the live titles carry emoji and get edited
     // mid-event, and we want a stable label on the scoreboard.
+    photo: scraped.photo ?? null,
     raised: scraped.raised ?? committed.raised,
     goal: scraped.goal ?? committed.goal,
     members,
@@ -206,22 +211,22 @@ function mergeTeam(committed, scraped) {
  * definition, which keeps this working if Steptember swaps the artwork.
  */
 function dropDefaultPhotos(teams) {
+  // Teams and members are counted together: the two share a stock-image pool,
+  // so a picture used by one team and one person is still a placeholder.
+  const holders = teams.flatMap((team) => [team, ...team.members]);
+
   const uses = new Map();
-  for (const team of teams) {
-    for (const { photo } of team.members) {
-      if (photo) uses.set(photo, (uses.get(photo) ?? 0) + 1);
-    }
+  for (const { photo } of holders) {
+    if (photo) uses.set(photo, (uses.get(photo) ?? 0) + 1);
   }
 
   const isDefault = (photo) =>
     uses.get(photo) > 1 || KNOWN_DEFAULT_IMAGES.has(photo.split('/').pop());
 
   let kept = 0;
-  for (const team of teams) {
-    for (const member of team.members) {
-      if (member.photo && isDefault(member.photo)) member.photo = null;
-      else if (member.photo) kept += 1;
-    }
+  for (const holder of holders) {
+    if (holder.photo && isDefault(holder.photo)) holder.photo = null;
+    else if (holder.photo) kept += 1;
   }
   return kept;
 }
@@ -293,7 +298,7 @@ async function main() {
   }
 
   const withPhotos = dropDefaultPhotos(updated);
-  console.log(`\n${withPhotos} of ${updated.flatMap((t) => t.members).length} members have a profile photo.`);
+  console.log(`\n${withPhotos} of ${updated.length + updated.flatMap((t) => t.members).length} teams and members have a profile photo.`);
 
   const nextTeams = {
     ...teamsData,

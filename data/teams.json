@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-05T12:14:18.755Z",
+    "lastUpdated": "2026-09-05T13:20:34.828Z",
     "dataSource": "live"
   },
   "teams": [
@@ -44,7 +44,7 @@
           "name": "Leanna Wang",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/leannawang",
-          "steps": 60156,
+          "steps": 66151,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -61,7 +61,8 @@
           "fundraisingGoal": 100,
           "photo": null
         }
-      ]
+      ],
+      "photo": "https://d1ycj7j4cqq4r8.cloudfront.net/1e4e65a9a532f1ddd864635a51cb9605.jpg"
     },
     {
       "id": "findingourfooting",
@@ -115,7 +116,8 @@
           "fundraisingGoal": 100,
           "photo": null
         }
-      ]
+      ],
+      "photo": null
     },
     {
       "id": "escalatedtothesteppingcommittee",
@@ -141,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 102506,
+          "steps": 106180,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
@@ -152,7 +154,7 @@
           "name": "chloe egle",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/chloeegle588721",
-          "steps": 82991,
+          "steps": 91289,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
@@ -169,7 +171,8 @@
           "fundraisingGoal": 350,
           "photo": null
         }
-      ]
+      ],
+      "photo": null
     }
   ]
 }

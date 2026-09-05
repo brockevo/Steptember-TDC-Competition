@@ -45,6 +45,8 @@
 
   --gold: #a97913;
   --good: #0a8f0a;
+  /* The tooltip inverts against the page, so its accent inverts too. */
+  --tip-accent: #6ee7a8;
 
   --r-card: 28px;
   --r-mid: 20px;
@@ -91,6 +93,7 @@
 
   --d-gold: #e0a32c;
   --d-good: #35c635;
+  --d-tip-accent: #0a7d3f;
 
   --d-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.7);
   --d-shadow-lift: 0 8px 16px -8px rgba(0, 0, 0, 0.5), 0 32px 64px -32px rgba(0, 0, 0, 0.8);
@@ -117,6 +120,7 @@
     --brand-deep: var(--d-brand-deep);
     --gold: var(--d-gold);
     --good: var(--d-good);
+    --tip-accent: var(--d-tip-accent);
     --shadow: var(--d-shadow);
     --shadow-lift: var(--d-shadow-lift);
   }
@@ -142,6 +146,7 @@
   --brand-deep: var(--d-brand-deep);
   --gold: var(--d-gold);
   --good: var(--d-good);
+  --tip-accent: var(--d-tip-accent);
   --shadow: var(--d-shadow);
   --shadow-lift: var(--d-shadow-lift);
 }
@@ -723,6 +728,20 @@ a {
   font-size: 12px;
 }
 
+/* A team's own picture, alongside its name on the team card. Named is-team so
+   it can't collide with the .team card class and inherit its card styling. */
+.avatar.is-team {
+  width: 48px;
+  height: 48px;
+  font-size: 15px;
+  border-radius: var(--r-mid);
+  box-shadow: none;
+}
+
+.avatar.is-team img {
+  border-radius: var(--r-mid);
+}
+
 .person-name {
   flex: 1;
   min-width: 0;
@@ -1075,9 +1094,54 @@ dialog.profile::backdrop {
 /* --------------------------------------------------------------- charts --- */
 
 .chart-block {
+  position: relative;
   background: var(--sunk);
   border-radius: var(--r-mid);
   padding: 14px 16px 10px;
+}
+
+.chart-hits rect {
+  cursor: pointer;
+}
+
+/* Sits above the hovered point, centred on it and clamped inside the card. */
+.chart-tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  z-index: 5;
+  pointer-events: none;
+  display: grid;
+  gap: 2px;
+  min-width: 168px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm, 10px);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.5);
+}
+
+.chart-tip strong {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-day {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+.tip-up {
+  color: var(--tip-accent);
+  font-weight: 700;
+}
+
+.tip-forecast {
+  opacity: 0.8;
 }
 
 .chart-head {
