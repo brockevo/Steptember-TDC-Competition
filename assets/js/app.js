@@ -2,7 +2,7 @@
 
 import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
-import { accentFor, avatar, handleBrokenAvatars, laneFor } from './ui.js';
+import { accentFor, avatar, handleBrokenAvatars, initTabbarAutoHide, laneFor } from './ui.js';
 import { chartBlock } from './chart.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
@@ -455,6 +455,7 @@ async function start() {
     renderFooter(data);
     initProfiles(data);
     initRouter();
+    initTabbarAutoHide();
   } catch (error) {
     console.error(error);
     const banner = document.getElementById('load-error');
