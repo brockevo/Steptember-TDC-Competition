@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-04T14:11:35.113Z",
+    "lastUpdated": "2026-09-05T00:19:11.244Z",
     "dataSource": "live"
   },
   "teams": [
@@ -33,7 +33,7 @@
           "name": "Christopher Tansey",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/christophertansey",
-          "steps": 40631,
+          "steps": 56381,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -98,7 +98,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 69346,
+          "steps": 76117,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
