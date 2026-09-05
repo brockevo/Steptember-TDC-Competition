@@ -18,10 +18,27 @@ export function onView(name, handler) {
   listeners.get(name).push(handler);
 }
 
+/**
+ * The hero is hidden on the profile view, so the theme toggle is relocated
+ * rather than lost. Moving the same element keeps its listener and state — a
+ * second copy would need its own wiring and could drift out of sync.
+ */
+function placeThemeToggle(name) {
+  const toggle = document.getElementById('theme-toggle');
+  const home =
+    name === 'profile'
+      ? document.getElementById('profile-toolbar')
+      : document.querySelector('.topbar');
+  if (toggle && home && toggle.parentElement !== home) home.prepend(toggle);
+}
+
 function show(name) {
   for (const view of VIEWS) {
     document.getElementById(`view-${view}`).hidden = view !== name;
   }
+  // Lets the stylesheet hide the hero on the profile view.
+  document.body.dataset.view = name;
+  placeThemeToggle(name);
   for (const tab of document.querySelectorAll('.tab')) {
     const active = tab.dataset.view === name;
     tab.classList.toggle('is-active', active);

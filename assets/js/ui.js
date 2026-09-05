@@ -22,6 +22,46 @@ export function avatar(member, extraClass = '') {
 }
 
 /**
+ * Tucks the bottom nav away while reading down a long page and brings it back
+ * on the first hint of scrolling up.
+ */
+export function initTabbarAutoHide() {
+  const bar = document.querySelector('.tabbar');
+  if (!bar) return;
+
+  /** Never hide near the top, where the bar isn't in the way of anything. */
+  const KEEP_VISIBLE_ABOVE = 140;
+  /** Ignore the small jitter of a trackpad or a rubber-banding phone. */
+  const MIN_MOVEMENT = 6;
+
+  let last = window.scrollY;
+  let pending = false;
+
+  function update() {
+    const y = window.scrollY;
+    if (Math.abs(y - last) >= MIN_MOVEMENT) {
+      bar.classList.toggle('is-tucked', y > last && y > KEEP_VISIBLE_ABOVE);
+      last = y;
+    }
+    pending = false;
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(update);
+    },
+    { passive: true },
+  );
+
+  // A keyboard user tabbing into the bar must never be left pressing buttons
+  // they can't see.
+  bar.addEventListener('focusin', () => bar.classList.remove('is-tucked'));
+}
+
+/**
  * If a Steptember photo 404s or is blocked, drop the <img> so the initials
  * underneath show through. Error events don't bubble, hence the capture phase.
  */
