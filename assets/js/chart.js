@@ -164,6 +164,14 @@ export function chartBlock({
  * so charts rendered later need no extra setup.
  */
 export function initChartTooltips() {
+  /**
+   * A touch tooltip stays put until dismissed, so it has to be cleared on
+   * scroll. A mouse one is already tied to the cursor and clears itself on
+   * leave — hiding that on scroll would make it vanish whenever the page moved
+   * under a steady pointer.
+   */
+  let pinned = false;
+
   const show = (band) => {
     const block = band.closest('.chart-block');
     const svg = band.closest('svg');
@@ -185,13 +193,19 @@ export function initChartTooltips() {
       <span class="tip-forecast">${forecast}</span>`;
     tip.hidden = false;
 
-    // The band's coordinates are in viewBox units; scale them to the rendered
-    // size so the tooltip lands on the point at any width.
-    const box = svg.getBoundingClientRect();
-    const scale = box.width / svg.viewBox.baseVal.width;
-    const left = Number(band.dataset.cx) * scale;
-    tip.style.left = `${Math.max(tip.offsetWidth / 2 + 4, Math.min(left, box.width - tip.offsetWidth / 2 - 4))}px`;
-    tip.style.top = `${Number(band.dataset.cy) * scale}px`;
+    // The band's coordinates are in viewBox units. Scale them to the rendered
+    // size, then shift by where the chart sits inside the card — the tooltip is
+    // positioned against the card, not the chart.
+    const chart = svg.getBoundingClientRect();
+    const card = block.getBoundingClientRect();
+    const scale = chart.width / svg.viewBox.baseVal.width;
+    const offsetX = chart.left - card.left;
+    const offsetY = chart.top - card.top;
+
+    const wanted = offsetX + Number(band.dataset.cx) * scale;
+    const half = tip.offsetWidth / 2;
+    tip.style.left = `${Math.max(half + 4, Math.min(wanted, card.width - half - 4))}px`;
+    tip.style.top = `${offsetY + Number(band.dataset.cy) * scale}px`;
 
     const cursor = svg.querySelector('.chart-cursor');
     if (cursor) {
@@ -206,16 +220,39 @@ export function initChartTooltips() {
     block.querySelector('.chart-cursor')?.setAttribute('opacity', '0');
   };
 
+  const hideAll = () => {
+    for (const block of document.querySelectorAll('.chart-block')) hide(block);
+    pinned = false;
+  };
+
   document.addEventListener('pointerover', (event) => {
     const band = event.target.closest?.('.chart-hits rect');
-    if (band) show(band);
+    if (!band) return;
+    if (event.pointerType === 'mouse') pinned = false;
+    show(band);
   });
 
-  // Taps don't produce a hover, so drive it from the press as well.
+  // Taps don't produce a hover, so drive it from the press as well. Pressing
+  // anywhere that isn't a day dismisses whatever is open.
   document.addEventListener('pointerdown', (event) => {
     const band = event.target.closest?.('.chart-hits rect');
-    if (band) show(band);
-    else for (const block of document.querySelectorAll('.chart-block')) hide(block);
+    if (!band) {
+      hideAll();
+      return;
+    }
+    pinned = event.pointerType !== 'mouse';
+    show(band);
+  });
+
+  // A tooltip is pinned to a point on a chart, so it has no meaning once that
+  // chart has moved. Without this a tap leaves it on screen indefinitely,
+  // drifting over the rest of the page as a stray panel.
+  window.addEventListener('scroll', () => { if (pinned) hideAll(); }, { passive: true });
+  window.addEventListener('resize', hideAll);
+  // Switching view swaps the page under it.
+  window.addEventListener('hashchange', hideAll);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') hideAll();
   });
 
   document.addEventListener('pointerout', (event) => {
