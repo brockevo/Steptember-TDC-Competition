@@ -48,53 +48,103 @@
     <main id="main">
       <p class="load-error" id="load-error" hidden></p>
 
-      <section class="section" id="standings-section" aria-labelledby="standings-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="standings-title">The standings</h2>
-            <p>Two challenges, scored separately — a team has to win both to lead outright.</p>
+      <!-- ------------------------------------------------------------ teams -->
+      <div class="view" id="view-teams">
+        <section class="section" id="standings-section" aria-labelledby="standings-title">
+          <div class="wrap">
+            <div class="section-head">
+              <h2 id="standings-title">The standings</h2>
+              <p>Two challenges, scored separately — a team has to win both to lead outright.</p>
+            </div>
+            <div class="boards" id="boards"></div>
           </div>
-          <div class="boards" id="boards"></div>
-        </div>
-      </section>
+        </section>
 
-      <section class="section" style="padding-top: 0" aria-label="Overall leader">
-        <div class="wrap">
-          <div id="verdict"></div>
-          <div id="insights"></div>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="teams-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="teams-title">The teams</h2>
-            <p>Select any name to see that person's full stats.</p>
+        <section class="section" style="padding-top: 0" aria-label="Overall leader">
+          <div class="wrap">
+            <div id="verdict"></div>
+            <div id="team-insights"></div>
           </div>
-          <div class="teams" id="teams"></div>
-        </div>
-      </section>
+        </section>
 
-      <section class="section" aria-labelledby="ladders-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="ladders-title">Top performers of all time</h2>
-            <p>Every participant across all three teams, ranked.</p>
+        <section class="section" aria-labelledby="teams-title">
+          <div class="wrap">
+            <div class="section-head">
+              <h2 id="teams-title">The teams</h2>
+              <p>Select any name to see that person's full stats.</p>
+            </div>
+            <div class="teams" id="teams"></div>
           </div>
-          <div class="ladders" id="ladders"></div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section class="section" style="padding-top: 0" aria-labelledby="overall-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="overall-title">Everyone combined</h2>
-            <p>Every step from all three teams, adding up across September.</p>
+      <!-- ------------------------------------------------------ leaderboard -->
+      <div class="view" id="view-leaderboard" hidden>
+        <section class="section" aria-labelledby="podium-title">
+          <div class="wrap">
+            <div class="section-head">
+              <h2 id="podium-title">On the podium</h2>
+              <p>The top three on each challenge, across all twelve steppers.</p>
+            </div>
+            <div class="podiums" id="podiums"></div>
           </div>
-          <div id="overall-chart"></div>
-        </div>
-      </section>
+        </section>
+
+        <section class="section" style="padding-top: 0" aria-label="Individual highlights">
+          <div class="wrap"><div id="individual-insights"></div></div>
+        </section>
+
+        <section class="section" style="padding-top: 0" aria-labelledby="ladders-title">
+          <div class="wrap">
+            <div class="section-head">
+              <h2 id="ladders-title">Top performers of all time</h2>
+              <p>Every participant across all three teams, ranked.</p>
+            </div>
+            <div class="ladders" id="ladders"></div>
+          </div>
+        </section>
+
+        <section class="section" style="padding-top: 0" aria-labelledby="overall-title">
+          <div class="wrap">
+            <div class="section-head">
+              <h2 id="overall-title">Everyone combined</h2>
+              <p>Every step from all three teams, adding up across September.</p>
+            </div>
+            <div id="overall-chart"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ---------------------------------------------------------- profile -->
+      <div class="view" id="view-profile" hidden>
+        <section class="section" aria-labelledby="profile-title">
+          <div class="wrap">
+            <div class="section-head">
+              <h2 id="profile-title">Your profile</h2>
+              <p>Pick yourself from the list to follow your own progress.</p>
+            </div>
+            <div id="profile-view"></div>
+          </div>
+        </section>
+      </div>
     </main>
+
+    <nav class="tabbar" aria-label="Sections">
+      <div class="tabbar-inner">
+        <button type="button" class="tab" data-view="teams" aria-current="page">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 20v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 20v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Teams</span>
+        </button>
+        <button type="button" class="tab" data-view="leaderboard">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg>
+          <span>Leaderboard</span>
+        </button>
+        <button type="button" class="tab" data-view="profile">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </button>
+      </div>
+    </nav>
 
     <footer class="site">
       <div class="wrap">

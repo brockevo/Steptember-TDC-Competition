@@ -5,6 +5,8 @@ import { initProfiles } from './member.js';
 import { accentFor, avatar, handleBrokenAvatars, laneFor } from './ui.js';
 import { chartBlock } from './chart.js';
 import { buildInsights } from './insights.js';
+import { initRouter } from './router.js';
+import { podium } from './podium.js';
 import {
   escapeHtml,
   formatDateTime,
@@ -303,9 +305,12 @@ function renderOverallChart(data) {
   </article>`;
 }
 
-/** Milestones and fun comparisons, under the verdict panel. */
-function renderInsights(data) {
-  const cards = buildInsights(data)
+/**
+ * Milestones and fun comparisons. The Teams view gets the team and whole-field
+ * ones; the Leaderboard view gets the ones about individual people.
+ */
+function renderInsights(data, { target, scope }) {
+  const cards = buildInsights(data, { scope })
     .map(
       (fact) => `<article class="insight"${fact.colour ? ` style="${accentFor(fact.colour)}"` : ''}>
         <span class="insight-kind">${escapeHtml(fact.kind)}</span>
@@ -313,7 +318,28 @@ function renderInsights(data) {
       </article>`,
     )
     .join('');
-  document.getElementById('insights').innerHTML = cards ? `<div class="insights">${cards}</div>` : '';
+  document.getElementById(target).innerHTML = cards ? `<div class="insights">${cards}</div>` : '';
+}
+
+/** Top three on each challenge, on the Leaderboard view. */
+function renderPodiums(data) {
+  const { competition, standings } = data;
+  document.getElementById('podiums').innerHTML =
+    podium({
+      title: 'Top steppers',
+      subtitle: 'Podium',
+      members: [...data.members].sort((a, b) => b.steps - a.steps),
+      valueOf: (member) => formatNumber(member.steps),
+    }) +
+    podium({
+      title: 'Top fundraisers',
+      subtitle: 'Podium',
+      members: [...data.members].sort((a, b) => (b.raised ?? 0) - (a.raised ?? 0)),
+      valueOf: (member) => formatMoney(member.raised, competition.currency),
+      empty: standings.fundraisingStarted
+        ? null
+        : 'Nobody has been sponsored yet — the first donation claims the top step.',
+    });
 }
 
 function renderLadders(data) {
@@ -412,15 +438,23 @@ async function start() {
     initThemeToggle();
     handleBrokenAvatars();
     const data = await loadCompetition();
+
+    // Teams view
     renderHero(data);
     renderStandings(data);
     renderVerdict(data);
-    renderInsights(data);
+    renderInsights(data, { target: 'team-insights', scope: 'team' });
     renderTeams(data);
+
+    // Leaderboard view
+    renderPodiums(data);
+    renderInsights(data, { target: 'individual-insights', scope: 'individual' });
     renderLadders(data);
     renderOverallChart(data);
+
     renderFooter(data);
     initProfiles(data);
+    initRouter();
   } catch (error) {
     console.error(error);
     const banner = document.getElementById('load-error');
