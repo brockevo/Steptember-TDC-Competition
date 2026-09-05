@@ -176,6 +176,7 @@ function buildProfile(member, data) {
     ${chartBlock({
       title: 'Cumulative steps',
       values: member.cumulative,
+      dates: data.history.dates,
       totalDays: clock.totalDays,
       target: member.stepTarget,
       colour: `var(--team-${member.teamColour})`,

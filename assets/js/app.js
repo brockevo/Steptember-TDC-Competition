@@ -3,7 +3,7 @@
 import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
 import { accentFor, avatar, handleBrokenAvatars, initTabbarAutoHide, laneFor } from './ui.js';
-import { chartBlock } from './chart.js';
+import { chartBlock, initChartTooltips } from './chart.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
 import { podium } from './podium.js';
@@ -249,7 +249,7 @@ function renderTeams(data) {
         : '<span class="badge">Fundraising not started</span>';
 
       return `<article class="team" style="${accentFor(team.colour)}">
-        <div class="team-top"><h3>${escapeHtml(team.name)}</h3></div>
+        <div class="team-top">${avatar(team, 'is-team')}<h3>${escapeHtml(team.name)}</h3></div>
         <div class="badges">
           ${stepBadge}${moneyBadge}
           <span class="badge">${team.memberCount} ${plural(team.memberCount, 'member')}</span>
@@ -277,6 +277,7 @@ function renderTeams(data) {
         ${chartBlock({
           title: 'Cumulative steps',
           values: team.cumulative,
+          dates: data.history.dates,
           totalDays: data.clock.totalDays,
           target: team.stepTarget,
           colour: `var(--team-${team.colour})`,
@@ -337,6 +338,7 @@ function renderOverallChart(data) {
     ${chartBlock({
       title: `Cumulative steps · all ${totals.memberCount} steppers`,
       values: totals.cumulative,
+      dates: data.history.dates,
       totalDays: clock.totalDays,
       target: totals.stepTarget,
       colour: 'var(--brand)',
@@ -498,6 +500,7 @@ async function start() {
     initProfiles(data);
     initRouter();
     initTabbarAutoHide();
+    initChartTooltips();
   } catch (error) {
     console.error(error);
     const banner = document.getElementById('load-error');
