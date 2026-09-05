@@ -31,7 +31,40 @@ function parseDate(iso) {
   return new Date(year, month - 1, day);
 }
 
-function buildClock({ startDate, endDate }) {
+/** How far the given zone is from UTC at that instant, in milliseconds. */
+function zoneOffset(instant, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+    .formatToParts(instant)
+    .filter((part) => part.type !== 'literal');
+  const at = Object.fromEntries(parts.map((part) => [part.type, Number(part.value)]));
+  // hour comes back as 24 at midnight in some engines.
+  const asUtc = Date.UTC(at.year, at.month - 1, at.day, at.hour % 24, at.minute, at.second);
+  return asUtc - instant.getTime();
+}
+
+/**
+ * The instant the campaign closes: midnight at the end of the final day, on the
+ * competition's own clock rather than the viewer's. Someone reading this from
+ * another country should see the time left until Steptember actually ends, not
+ * until their own month does. Derived rather than hard-coded so a campaign that
+ * ran across a daylight-saving change would still be right.
+ */
+function campaignEnd(endDate, timeZone) {
+  const [year, month, day] = endDate.split('-').map(Number);
+  const midnightAfter = new Date(Date.UTC(year, month - 1, day + 1));
+  return new Date(midnightAfter.getTime() - zoneOffset(midnightAfter, timeZone));
+}
+
+function buildClock({ startDate, endDate, timeZone = 'Australia/Sydney' }) {
   const start = parseDate(startDate);
   const end = parseDate(endDate);
   const today = new Date();
@@ -44,6 +77,8 @@ function buildClock({ startDate, endDate }) {
   return {
     start,
     end,
+    endsAt: campaignEnd(endDate, timeZone),
+    timeZone,
     totalDays,
     daysElapsed,
     daysRemaining: Math.max(totalDays - daysElapsed, 0),
