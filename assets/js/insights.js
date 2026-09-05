@@ -77,9 +77,8 @@ function listNames(names) {
 
 /* ------------------------------------------------------------- the facts -- */
 
-function milestoneFacts(data) {
-  const facts = [];
-
+/** Milestones about individual people — the Leaderboard view's news. */
+function personMilestones(data) {
   // Several people often cross the same mark on the same day; say it once.
   const byThreshold = new Map();
   for (const member of data.members) {
@@ -90,16 +89,21 @@ function milestoneFacts(data) {
   }
 
   // Biggest achievement first.
-  for (const [threshold, crossers] of [...byThreshold].sort((a, b) => b[0] - a[0])) {
-    facts.push({
+  return [...byThreshold]
+    .sort((a, b) => b[0] - a[0])
+    .map(([threshold, crossers]) => ({
       kind: 'Milestone',
       colour: crossers.length === 1 ? crossers[0].teamColour : null,
       members: crossers.map((member) => member.id),
       html: `${listNames(crossers.map((member) => member.name))} ${
         { 1: 'has', 2: 'have both' }[crossers.length] ?? 'have all'
       } passed <strong>${formatNumber(threshold)} steps</strong> — that's ${against(threshold)}.`,
-    });
-  }
+    }));
+}
+
+/** Milestones about teams and the whole field — the Teams view's news. */
+function groupMilestones(data) {
+  const facts = [];
 
   for (const team of data.teams) {
     for (const threshold of crossings(team.cumulative, TEAM_MILESTONES)) {
@@ -280,7 +284,12 @@ function seedFrom(text) {
   return hash;
 }
 
-export function buildInsights(data, limit = 4) {
+/**
+ * @param scope 'individual' for the Leaderboard view — people's milestones,
+ *              records and spotlights. 'team' for the Teams view — team and
+ *              whole-field milestones plus the group-wide comparisons.
+ */
+export function buildInsights(data, { limit = 4, scope = 'individual' } = {}) {
   const seed = seedFrom(data.history.dates.at(-1) ?? 'start');
   const teamOf = (memberId) => data.membersById.get(memberId)?.teamId;
 
@@ -305,7 +314,8 @@ export function buildInsights(data, limit = 4) {
 
   // 1. Milestones and records lead, but only as many as still leave room for
   //    every team to be represented.
-  const news = [...milestoneFacts(data), ...recordFacts(data)];
+  const news =
+    scope === 'team' ? groupMilestones(data) : [...personMilestones(data), ...recordFacts(data)];
   const picked = [];
   const seen = new Set();
   for (const fact of news) {
@@ -314,18 +324,23 @@ export function buildInsights(data, limit = 4) {
     picked.push(fact);
     fact.members.forEach((id) => seen.add(id));
   }
+  // Only the individual view reserves a slot per team; the team view is about
+  // the groups themselves, so its milestones aren't trimmed for people.
+  const featuresPeople = scope === 'individual';
   const teamsMissing = (facts) => {
     const covered = new Set(facts.flatMap((fact) => fact.members.map(teamOf)));
     return data.teams.filter((team) => !covered.has(team.id)).length;
   };
-  while (picked.length > 0 && picked.length + teamsMissing(picked) > limit) picked.pop();
+  if (featuresPeople) {
+    while (picked.length > 0 && picked.length + teamsMissing(picked) > limit) picked.pop();
+  }
   picked.forEach(take);
 
   // 2. Give every remaining team somebody of its own, each on a different
   //    comparison — two boxes making the same point about different people
   //    reads as a duplicate.
   const families = FAMILIES.map((_, index) => FAMILIES[(index + seed) % FAMILIES.length]);
-  for (const team of data.teams) {
+  for (const team of featuresPeople ? data.teams : []) {
     if (chosen.length >= limit || coveredTeams.has(team.id)) continue;
 
     const person = rosterOrder(team, seed).find((member) => !usedMembers.has(member.id));
@@ -352,8 +367,23 @@ export function buildInsights(data, limit = 4) {
     }
   }
 
-  // 3. Fill any spare slots with the day's general comparisons, again skipping
-  //    anything that would repeat a point already made.
+  // 3. The individual view fills with more people rather than whole-field
+  //    comparisons — those belong to the team view, and running them on both
+  //    would show the same card in two places.
+  if (featuresPeople) {
+    for (const team of data.teams) {
+      if (chosen.length >= limit) break;
+      const person = rosterOrder(team, seed).find((member) => !usedMembers.has(member.id));
+      if (!person) continue;
+      const family = families.find(
+        (option) => !usedFamilies.has(option) && supports(person, option),
+      );
+      if (family) take(spotlightCard([person], family, data.clock));
+    }
+  }
+
+  // 4. Anything still empty takes the day's general comparisons, skipping
+  //    whatever would repeat a point already made.
   for (const fact of rotatedGeneral) {
     if (chosen.length >= limit) break;
     if (!usedFamilies.has(fact.family)) take(fact);
