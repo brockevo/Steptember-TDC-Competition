@@ -65,9 +65,51 @@ function renderHero(data) {
       <dt>Raised together</dt>
     </div>
     <div>
-      <dd>${clock.finished ? clock.totalDays : clock.daysRemaining}</dd>
-      <dt>${clock.finished ? 'Days completed' : `Days left of ${clock.totalDays}`}</dt>
+      <dd class="countdown" id="countdown">—</dd>
+      <dt id="countdown-caption">Until Steptember closes</dt>
     </div>`;
+
+  startCountdown(clock);
+}
+
+/**
+ * Ticks the time left down to the second. The target is midnight at the end of
+ * the final day on the competition's clock, so the figure is the same for
+ * everyone regardless of where they're reading it.
+ */
+function startCountdown(clock) {
+  const output = document.getElementById('countdown');
+  const caption = document.getElementById('countdown-caption');
+  if (!output) return;
+
+  const closesAt = clock.endsAt.getTime();
+  // Midnight ending the 30th formats as "1 October, 12:00 am", which reads as
+  // the wrong day — name the final day instead.
+  const finalDay = clock.end.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const city = clock.timeZone.split('/')[1].replace('_', ' ');
+  output.title = `Steptember closes at the end of ${finalDay}, ${city} time`;
+
+  const pad = (value) => String(value).padStart(2, '0');
+
+  function tick() {
+    const left = closesAt - Date.now();
+
+    if (left <= 0) {
+      output.textContent = 'Finished';
+      caption.textContent = 'Steptember is done';
+      clearInterval(timer);
+      return;
+    }
+
+    const seconds = Math.floor(left / 1000);
+    const days = Math.floor(seconds / 86400);
+    output.innerHTML =
+      `${days}<span class="unit">d</span> ` +
+      `${pad(Math.floor((seconds % 86400) / 3600))}:${pad(Math.floor((seconds % 3600) / 60))}:${pad(seconds % 60)}`;
+  }
+
+  tick();
+  const timer = setInterval(tick, 1000);
 }
 
 /* ------------------------------------------------------------ scoreboards -- */

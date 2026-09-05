@@ -384,6 +384,14 @@ a {
   margin-left: 1px;
 }
 
+/* A hair smaller than the other two figures, since it carries far more
+   characters, and tabular so the digits don't shuffle as they tick. */
+.stat-strip .countdown {
+  font-size: clamp(19px, 3vw, 29px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .stat-strip dt {
   font-size: clamp(11px, 1.3vw, 13px);
   color: var(--ink-muted);
