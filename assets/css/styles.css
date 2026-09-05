@@ -1496,3 +1496,339 @@ footer.site ul {
     min-height: 84px;
   }
 }
+
+/* --------------------------------------------------------- profile view -- */
+
+.pick-lead {
+  margin: 0 0 16px;
+  color: var(--ink-secondary);
+  max-width: 54ch;
+}
+
+.pick-group {
+  margin-bottom: 26px;
+}
+
+.pick-group h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.pick-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+/* One card per person. The whole card is the button so it's an easy target on
+   a phone, where this list is most likely to be used. */
+.pick {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-mid);
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+  font: inherit;
+}
+
+.pick:hover,
+.pick:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.pick {
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.pick-name {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.profile-pick .btn {
+  margin-bottom: 22px;
+}
+
+/* ------------------------------------------------------------ the quiz --- */
+
+.profile-quiz {
+  max-width: 560px;
+  display: grid;
+  gap: 22px;
+}
+
+.quiz-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.quiz-head h3 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.quiz-head p {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.field-label {
+  font-weight: 700;
+  font-size: 15px;
+  padding: 0;
+}
+
+.field-label em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-secondary);
+}
+
+.field input[type='number'] {
+  font: inherit;
+  padding: 12px 14px;
+  border-radius: var(--r-mid);
+  border: 1px solid var(--hairline-strong);
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
+  max-width: 240px;
+}
+
+.field input[type='number']:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.field small {
+  color: var(--ink-secondary);
+  font-size: 13px;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.choices label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ------------------------------------------------- before-and-after panel -- */
+
+.compare {
+  background: var(--brand);
+  color: #fff;
+  border-radius: var(--r-card);
+  padding: 24px;
+  margin-bottom: 22px;
+}
+
+.compare.is-down {
+  background: var(--ink);
+}
+
+.compare h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  opacity: 0.75;
+  margin-bottom: 18px;
+}
+
+.compare-figures {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px 22px;
+}
+
+.compare-cell {
+  display: grid;
+  gap: 1px;
+}
+
+.compare-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.7;
+}
+
+.compare-cell strong {
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.compare-cell small {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.compare-arrow {
+  font-size: 26px;
+  opacity: 0.6;
+}
+
+/* The headline number, pushed to the end of the row on a wide screen. */
+.compare-delta {
+  margin-left: auto;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  padding: 10px 18px;
+  border-radius: var(--r-mid);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.compare-delta strong {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.compare-delta small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.compare-verdict {
+  margin: 20px 0 0;
+  font-size: clamp(17px, 2.4vw, 21px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.compare-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------- the dashboard --- */
+
+.me-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.me-id {
+  flex: 1;
+  min-width: 0;
+}
+
+.me-id h3 {
+  font-size: clamp(20px, 3vw, 26px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-quiet {
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+  font-size: 13px;
+  padding: 9px 16px;
+}
+
+.placements {
+  margin-bottom: 22px;
+}
+
+.placements h3,
+.profile-me .chart-block + .mini-lane {
+  margin-top: 0;
+}
+
+.placements h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-secondary);
+  margin-bottom: 12px;
+}
+
+.profile-me .chart-block {
+  margin-bottom: 22px;
+}
+
+.baseline-recap {
+  font-size: 14px;
+  color: var(--ink-secondary);
+  margin: 18px 0;
+}
+
+/* A button that reads as a link, for the small "change these answers" action. */
+.linkish {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--brand);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.privacy-note {
+  margin: 26px 0 0;
+  padding: 14px 16px;
+  border-radius: var(--r-mid);
+  background: var(--sunk);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+
+@media (max-width: 560px) {
+  .compare-delta {
+    margin-left: 0;
+    width: 100%;
+    justify-items: start;
+  }
+
+  .me-head {
+    flex-wrap: wrap;
+  }
+}

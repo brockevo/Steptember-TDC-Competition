@@ -6,6 +6,7 @@ import { accentFor, avatar, handleBrokenAvatars, initTabbarAutoHide, laneFor } f
 import { chartBlock, initChartTooltips } from './chart.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
+import { initProfileView } from './profile.js';
 import { podium } from './podium.js';
 import {
   escapeHtml,
@@ -495,6 +496,9 @@ async function start() {
     renderInsights(data, { target: 'individual-insights', scope: 'individual' });
     renderLadders(data);
     renderOverallChart(data);
+
+    // Profile view
+    initProfileView(data);
 
     renderFooter(data);
     initProfiles(data);
