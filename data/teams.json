@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-06T08:13:00.589Z",
+    "lastUpdated": "2026-09-06T09:29:31.443Z",
     "dataSource": "live"
   },
   "teams": [
@@ -110,7 +110,7 @@
           "name": "Shivika Sharma",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/shivikasharma596864",
-          "steps": 90203,
+          "steps": 93481,
           "stepTarget": 225000,
           "raised": 18,
           "fundraisingGoal": 100,
@@ -154,7 +154,7 @@
           "name": "chloe egle",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/chloeegle588721",
-          "steps": 91289,
+          "steps": 106256,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
