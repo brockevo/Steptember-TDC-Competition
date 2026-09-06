@@ -56,6 +56,33 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
   summing a team or the whole field — otherwise a day where somebody hadn't synced would show the
   group's total dropping.
 
+### The TDC leaderboard, and the login it needs
+
+Team and member figures come from public pages. **Placements across TDC** do not — the org
+leaderboard redirects to a sign-in when logged out, and its login form is rendered client-side, so
+there is no form to POST to. `scripts/fetch-org-leaderboard.mjs` drives a real browser instead.
+
+It runs from the same two-hourly job, straight after the public scrape, and needs two repository
+secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | What it is |
+| --- | --- |
+| `STEPTEMBER_EMAIL` | the dedicated Steptember account's email |
+| `STEPTEMBER_PASSWORD` | its password |
+
+The credentials are read from the environment inside the Action only. They are never committed,
+never written to `data/`, never logged (the error handler prints the message alone, since a browser
+error can carry the page the credentials were typed into), and never reach anything the browser
+loads.
+
+Only **our own rows** are written: a rank and a field size for our three teams and twelve people.
+Other organisations' figures are read to compute the ranking and then discarded.
+
+Both the browser install and the scrape are `continue-on-error`. The placements are a garnish; a
+rejected login or a moved selector must never cost us the step and donation refresh, which is what
+the site actually runs on. When the scrape fails, `data/placements.json` is left exactly as it is
+and the site simply shows no placement rows.
+
 ### Why a scheduled job rather than a live API
 
 Steptember's `robots.txt` disallows `/api`, and a static page can't read `steptember.org.au` from the
@@ -102,7 +129,9 @@ assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets
 data/history.json           each member's running step total per day
-scripts/fetch-steptember.mjs  the scraper
+data/placements.json        where our teams and people sit across TDC
+scripts/fetch-steptember.mjs  the public team-page scraper
+scripts/fetch-org-leaderboard.mjs  the TDC leaderboard scrape, which needs a login
 ```
 
 ## The Profile page, and what it stores

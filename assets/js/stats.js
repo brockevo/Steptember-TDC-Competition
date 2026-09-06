@@ -97,6 +97,37 @@ export function memberStats(member, data) {
   return stats;
 }
 
+/**
+ * Where someone sits across TDC, from the org leaderboard behind the Steptember
+ * login — or nothing at all until that scrape has run.
+ *
+ * Kept out of `memberStats` deliberately: the Profile page groups these under
+ * its own "Where you sit" heading, so folding them into the shared grid would
+ * print them twice there.
+ */
+export function tdcPlacements(placements) {
+  const rows = [];
+  if (placements?.steps) {
+    rows.push(
+      kpi(
+        'Steps across TDC',
+        ordinal(placements.steps.rank),
+        `of ${formatNumber(placements.steps.of)} TDC steppers`,
+      ),
+    );
+  }
+  if (placements?.raised) {
+    rows.push(
+      kpi(
+        'Fundraising across TDC',
+        ordinal(placements.raised.rank),
+        `of ${formatNumber(placements.raised.of)} TDC steppers`,
+      ),
+    );
+  }
+  return rows;
+}
+
 /** Progress towards a personal step target, or nothing when they haven't set one. */
 export function targetLane(member) {
   if (!member.stepTarget) return '';

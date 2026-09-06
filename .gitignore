@@ -1,0 +1,3 @@
+# Playwright is installed at build time for the leaderboard scrape only — the
+# site itself stays dependency-free, so nothing here is ever committed.
+node_modules/
