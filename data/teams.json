@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-06T00:20:43.031Z",
+    "lastUpdated": "2026-09-06T02:12:14.207Z",
     "dataSource": "live"
   },
   "teams": [
@@ -110,7 +110,7 @@
           "name": "Shivika Sharma",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/shivikasharma596864",
-          "steps": 70319,
+          "steps": 79319,
           "stepTarget": 225000,
           "raised": 18,
           "fundraisingGoal": 100,
