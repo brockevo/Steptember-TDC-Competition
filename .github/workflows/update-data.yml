@@ -30,6 +30,29 @@ jobs:
       - name: Scrape the team pages
         run: node scripts/fetch-steptember.mjs
 
+      # The org leaderboard needs a session and its login is client-rendered,
+      # so this half needs a real browser where the team pages did not.
+      # --no-save because the repo has no package.json and wants none: this is a
+      # build-time tool for one step, not a dependency of the site, which stays
+      # dependency-free. The commit step only ever stages data/, so the
+      # node_modules this creates is never committed.
+      - name: Install a browser for the leaderboard scrape
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+        continue-on-error: true
+
+      # continue-on-error on both steps: the placements are a garnish, and a
+      # rejected login or a moved selector must never cost us the step and
+      # donation refresh, which is what the site actually runs on. The script
+      # leaves the committed placements untouched whenever it cannot read them.
+      - name: Read our placements across TDC
+        run: node scripts/fetch-org-leaderboard.mjs
+        continue-on-error: true
+        env:
+          STEPTEMBER_EMAIL: ${{ secrets.STEPTEMBER_EMAIL }}
+          STEPTEMBER_PASSWORD: ${{ secrets.STEPTEMBER_PASSWORD }}
+
       - name: Commit any changes
         run: |
           if git diff --quiet -- data/; then

@@ -1832,3 +1832,31 @@ footer.site ul {
     flex-wrap: wrap;
   }
 }
+
+/* Where a team sits across TDC, under its headline figures. Only rendered once
+   the org leaderboard has been read, so it is absent rather than empty. */
+.tdc-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border-radius: var(--r-mid);
+  background: var(--sunk);
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+
+.tdc-strip strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdc-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+}

@@ -171,6 +171,11 @@ function buildHistory(historyMembers, clock) {
 export async function loadCompetition() {
   const teamsData = await loadJson('data/teams.json');
   const historyData = await loadJson('data/history.json', { members: {} });
+  // Where we sit inside TDC, gathered from the org leaderboard behind the
+  // Steptember login. Optional by design: before that scrape has ever run — or
+  // any time it fails — the file is absent and the page simply shows no
+  // placement rows, exactly as it did before this existed.
+  const placements = await loadJson('data/placements.json', { teams: {}, members: {} });
 
   const { competition } = teamsData;
   const clock = buildClock(competition);
@@ -222,6 +227,7 @@ export async function loadCompetition() {
       teamStepRank:
         teamMates.filter((other) => other.steps > member.steps).length + 1,
       teamSize: teamMates.length,
+      placements: placements.members?.[member.id] ?? null,
       shareOfTeamSteps: member.teamSteps > 0 ? member.steps / member.teamSteps : 0,
       shareOfTeamRaised: member.teamRaised > 0 ? (member.raised ?? 0) / member.teamRaised : 0,
       dailyAverage,
@@ -253,6 +259,7 @@ export async function loadCompetition() {
   const teamsWithStats = teams.map((team) => ({
     ...team,
     steps: team.steps,
+    placements: placements.teams?.[team.id] ?? null,
     stepStanding: stepRanks.byId.get(team.id),
     moneyStanding: moneyRanks.byId.get(team.id),
     goalProgress: team.goal ? (team.raised ?? 0) / team.goal : null,

@@ -234,6 +234,25 @@ function rosterRow(member, currency) {
   </li>`;
 }
 
+/**
+ * Where a team sits inside TDC, from the org leaderboard behind the Steptember
+ * login. Nothing at all until that scrape has run, so the card is unchanged on
+ * a fresh checkout or any time the ranking step failed.
+ */
+function tdcStrip(placements, noun) {
+  if (!placements?.steps && !placements?.raised) return '';
+  const parts = [];
+  if (placements.steps) {
+    parts.push(
+      `<span><strong>${ordinal(placements.steps.rank)}</strong> of ${formatNumber(placements.steps.of)} ${escapeHtml(noun)} on steps</span>`,
+    );
+  }
+  if (placements.raised) {
+    parts.push(`<span><strong>${ordinal(placements.raised.rank)}</strong> on fundraising</span>`);
+  }
+  return `<p class="tdc-strip"><span class="tdc-label">Across TDC</span>${parts.join('')}</p>`;
+}
+
 function renderTeams(data) {
   const { competition } = data;
   document.getElementById('teams').innerHTML = [...data.teams]
@@ -274,6 +293,8 @@ function renderTeams(data) {
             </div>
           </div>
         </div>
+
+        ${tdcStrip(team.placements, 'teams')}
 
         ${chartBlock({
           title: 'Cumulative steps',
