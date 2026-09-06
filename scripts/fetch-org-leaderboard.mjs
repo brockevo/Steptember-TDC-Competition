@@ -1,5 +1,6 @@
 /**
- * Reads where our teams and people sit on TDC's Steptember leaderboard.
+ * Reads where our teams and people sit on our organisation's Steptember
+ * leaderboard. Our teams are registered under KPMG, so that is the field.
  *
  * Unlike the public team pages, this one needs a session: the leaderboard
  * redirects to the login when signed out, and the login form is rendered
@@ -12,10 +13,10 @@
  *    The step and donation refresh is what the site actually depends on; this
  *    is a garnish, and a broken garnish must not cost us the meal.
  *
- * 2. **It only ever writes our own rows.** The leaderboard lists every TDC team
- *    and participant. We take a rank and a field size for our three teams and
- *    twelve people, and nothing else — enough to say where we sit without
- *    republishing anyone else's figures.
+ * 2. **It only ever writes our own rows.** The leaderboard lists every team and
+ *    participant in the organisation. We take a rank and a field size for our
+ *    three teams and twelve people, and nothing else — enough to say where we
+ *    sit without republishing anyone else's figures.
  *
  * Credentials come from the environment and are never logged, never written to
  * `data/`, and never reach the browser bundle.
@@ -30,7 +31,31 @@ const TEAMS_FILE = resolve(ROOT, 'data/teams.json');
 const PLACEMENTS_FILE = resolve(ROOT, 'data/placements.json');
 
 const ORIGIN = 'https://www.steptember.org.au';
-const LEADERBOARD_URL = `${ORIGIN}/login/view/org-leaderboard`;
+
+/**
+ * Our teams are registered under the KPMG organisation, so KPMG's page is the
+ * field we are ranked in. Overridable in case that ever changes.
+ */
+const ORG = process.env.STEPTEMBER_ORG ?? 'kpmg';
+
+/** Where the login is driven from; also the first place we look for a ladder. */
+const LOGIN_URL = `${ORIGIN}/login/view/org-leaderboard`;
+
+/**
+ * Pages that might carry the organisation ladder, tried in order until one
+ * yields rows we recognise.
+ *
+ * A list rather than a single URL because the first attempt landed somewhere
+ * with only three fundraiser links on it — the org's own page among them — so
+ * the ladder plainly lives somewhere other than where I first guessed, and one
+ * run that tries several is worth more than several runs that each try one.
+ */
+const CANDIDATE_URLS = [
+  `${ORIGIN}/login/view/org-leaderboard`,
+  `${ORIGIN}/fundraisers/${ORG}`,
+  `${ORIGIN}/fundraisers/${ORG}/leaderboard`,
+  `${ORIGIN}/organisations/${ORG}`,
+];
 
 const EMAIL = process.env.STEPTEMBER_EMAIL;
 const PASSWORD = process.env.STEPTEMBER_PASSWORD;
@@ -194,6 +219,75 @@ export function byEntity(placementsByMeasure) {
   return out;
 }
 
+/**
+ * Opens one candidate page and reports what it holds.
+ *
+ * Never throws: a candidate that 404s, renders nothing, or holds a different
+ * page entirely is an answer, not a failure — the caller tries the next one.
+ * It also waits for content rather than gating on it, since the ladder is
+ * rendered client-side and the first attempt timed out on a `visible` check
+ * against links that were present but hidden.
+ */
+async function readLadder(page, url, teams, members) {
+  const empty = { steps: new Map(), raised: new Map() };
+  const nothing = {
+    teamPlacements: empty,
+    memberPlacements: empty,
+    matched: 0,
+    tables: [],
+    groups: [],
+    shape: { links: 0, tables: 0, headings: '' },
+  };
+
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT_MS });
+  } catch (error) {
+    return nothing;
+  }
+
+  // Attached rather than visible, and non-fatal: the point is to look, not to
+  // insist. A page that never grows a ladder simply reports none.
+  await page
+    .waitForSelector('a[href*="/fundraisers/"]', { state: 'attached', timeout: 15_000 })
+    .catch(() => {});
+
+  const shape = await page.evaluate(() => ({
+    links: document.querySelectorAll('a[href*="/fundraisers/"]').length,
+    tables: document.querySelectorAll('table').length,
+    // The organisation's own headings, which describe the page rather than
+    // anyone on it — safe to print, and the quickest way to see where we are.
+    headings: [...document.querySelectorAll('h1, h2')]
+      .map((h) => (h.innerText || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 6)
+      .join(' / '),
+  }));
+
+  const tables = await page.evaluate(extractRows);
+
+  const teamPlacements = { steps: new Map(), raised: new Map() };
+  const memberPlacements = { steps: new Map(), raised: new Map() };
+  for (const rows of tables) {
+    for (const measure of ['steps', 'raised']) {
+      const forTeams = placeOurs(rows, teams, measure);
+      if (forTeams.size > teamPlacements[measure].size) teamPlacements[measure] = forTeams;
+      const forMembers = placeOurs(rows, members, measure);
+      if (forMembers.size > memberPlacements[measure].size) memberPlacements[measure] = forMembers;
+    }
+  }
+
+  return {
+    teamPlacements,
+    memberPlacements,
+    matched:
+      teamPlacements.steps.size + teamPlacements.raised.size +
+      memberPlacements.steps.size + memberPlacements.raised.size,
+    tables,
+    groups: tables.map((rows) => rows.length),
+    shape,
+  };
+}
+
 async function main() {
   if (!EMAIL || !PASSWORD) {
     console.error(
@@ -213,7 +307,7 @@ async function main() {
   page.setDefaultTimeout(NAV_TIMEOUT_MS);
 
   try {
-    await page.goto(LEADERBOARD_URL, { waitUntil: 'domcontentloaded' });
+    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
 
     // The login is a client-rendered overlay, so wait for the field itself
     // rather than for a URL or a form element that may never exist.
@@ -225,57 +319,44 @@ async function main() {
       page.click('button[type="submit"], input[type="submit"]'),
     ]);
 
-    await page.goto(LEADERBOARD_URL, { waitUntil: 'networkidle' });
+    await page.goto(LOGIN_URL, { waitUntil: 'networkidle' });
     if (await page.$('input[type="password"]')) {
       throw new Error('still on the login after signing in — credentials rejected or the flow changed');
     }
+    console.log('Signed in.');
 
-    // A leaderboard row has to link to the fundraiser it ranks, whatever it is
-    // built from. Waiting for a table was the first attempt's mistake: the page
-    // renders fine and has no tables at all.
-    await page.waitForSelector('a[href*="/fundraisers/"]', { timeout: NAV_TIMEOUT_MS });
-    const tables = await page.evaluate(extractRows);
-
-    // Which list is which is decided by what actually matched, not by position
-    // — the page is free to reorder its sections.
     let teamPlacements = { steps: new Map(), raised: new Map() };
     let memberPlacements = { steps: new Map(), raised: new Map() };
+    let matched = 0;
+    let tables = [];
 
-    for (const rows of tables) {
-      for (const measure of ['steps', 'raised']) {
-        const forTeams = placeOurs(rows, teams, measure);
-        if (forTeams.size > teamPlacements[measure].size) teamPlacements[measure] = forTeams;
-        const forMembers = placeOurs(rows, members, measure);
-        if (forMembers.size > memberPlacements[measure].size) memberPlacements[measure] = forMembers;
+    for (const url of CANDIDATE_URLS) {
+      const attempt = await readLadder(page, url, teams, members);
+      // Structure only: counts, the page's own title and headings. Never
+      // another participant's name or figures — this log is public.
+      console.log(
+        `  ${url.replace(ORIGIN, '')} → ${attempt.shape.links} fundraiser links, ` +
+          `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}], ` +
+          `matched ${attempt.matched} of ours` +
+          (attempt.shape.headings ? ` · headings: ${attempt.shape.headings}` : ''),
+      );
+      if (attempt.matched > matched) {
+        ({ teamPlacements, memberPlacements, matched, tables } = attempt);
       }
+      // Every team and every member on one page is as good as it gets.
+      if (matched >= teams.length + members.length) break;
     }
 
-    const matched =
-      teamPlacements.steps.size + teamPlacements.raised.size +
-      memberPlacements.steps.size + memberPlacements.raised.size;
-
     if (matched === 0) {
-      // Structure only. This log is public, so it never carries another
-      // organisation's names or figures — just enough shape to fix the parsing.
-      const shape = await page.evaluate(() => ({
-        links: document.querySelectorAll('a[href*="/fundraisers/"]').length,
-        tables: document.querySelectorAll('table').length,
-        lists: document.querySelectorAll('ul, ol').length,
-        title: document.title,
-      }));
-      console.error(
-        `Page shape: ${shape.links} fundraiser links, ${shape.tables} tables, ` +
-          `${shape.lists} lists, title "${shape.title}"`,
-      );
-      console.error(`Grouped into ${tables.length} lists of sizes [${tables.map((r) => r.length).join(', ')}]`);
       throw new Error(
-        `read ${tables.flat().length} rows but matched none of our ${teams.length} teams or ${members.length} members`,
+        `none of the ${CANDIDATE_URLS.length} candidate pages carried a ladder with ` +
+          `our ${teams.length} teams or ${members.length} members on it`,
       );
     }
 
     const next = {
       updated: new Date().toISOString(),
-      scope: 'tdc',
+      scope: ORG,
       teams: byEntity(teamPlacements),
       members: byEntity(memberPlacements),
     };
@@ -321,7 +402,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   main().catch((error) => {
   // Deliberately the message only: an error from the browser can carry the page
   // it was on, and that page has our credentials typed into it.
-    console.error(`Could not read the TDC leaderboard: ${error.message}`);
+    console.error(`Could not read the ${ORG.toUpperCase()} leaderboard: ${error.message}`);
     console.error('Leaving the committed placements untouched.');
     process.exit(1);
   });

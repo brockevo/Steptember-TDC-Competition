@@ -15,6 +15,9 @@ import {
   plural,
 } from './format.js';
 
+/** The organisation our teams are registered under, and so ranked within. */
+export const ORG_NAME = 'KPMG';
+
 export function kpi(label, value, note) {
   return `<div class="kpi">
     <dt>${escapeHtml(label)}</dt>
@@ -98,30 +101,33 @@ export function memberStats(member, data) {
 }
 
 /**
- * Where someone sits across TDC, from the org leaderboard behind the Steptember
- * login — or nothing at all until that scrape has run.
+ * Where someone sits across the whole organisation, from the leaderboard behind
+ * the Steptember login — or nothing at all until that scrape has run.
+ *
+ * Our teams are registered under KPMG, so that is the field being ranked in:
+ * every KPMG participant, not just the twelve of us.
  *
  * Kept out of `memberStats` deliberately: the Profile page groups these under
  * its own "Where you sit" heading, so folding them into the shared grid would
  * print them twice there.
  */
-export function tdcPlacements(placements) {
+export function orgPlacements(placements, org = ORG_NAME) {
   const rows = [];
   if (placements?.steps) {
     rows.push(
       kpi(
-        'Steps across TDC',
+        `Steps across ${org}`,
         ordinal(placements.steps.rank),
-        `of ${formatNumber(placements.steps.of)} TDC steppers`,
+        `of ${formatNumber(placements.steps.of)} ${org} steppers`,
       ),
     );
   }
   if (placements?.raised) {
     rows.push(
       kpi(
-        'Fundraising across TDC',
+        `Fundraising across ${org}`,
         ordinal(placements.raised.rank),
-        `of ${formatNumber(placements.raised.of)} TDC steppers`,
+        `of ${formatNumber(placements.raised.of)} ${org} steppers`,
       ),
     );
   }

@@ -12,7 +12,7 @@
 
 import { avatar } from './ui.js';
 import { chartBlock } from './chart.js';
-import { fundraisingLane, kpi, memberStats, targetLane, tdcPlacements } from './stats.js';
+import { fundraisingLane, kpi, memberStats, orgPlacements, targetLane } from './stats.js';
 import { escapeHtml, formatNumber, ordinal, plural } from './format.js';
 
 const KEY = 'steptember:me';
@@ -183,9 +183,9 @@ function renderComparison(member, baseline, clock) {
 /* ------------------------------------------------------------- the profile -- */
 
 /**
- * Where this person sits: within the twelve of us always, and across TDC once
- * the org leaderboard has been read. The TDC rows are absent rather than blank
- * whenever that scrape hasn't run.
+ * Where this person sits: within the twelve of us always, and across the whole
+ * organisation once its leaderboard has been read. The organisation rows are
+ * absent rather than blank whenever that scrape hasn't run.
  */
 function renderPlacements(member, data) {
   const rows = [
@@ -194,7 +194,7 @@ function renderPlacements(member, data) {
     kpi('Fundraising, everyone here', ordinal(member.overallMoneyRank), `of ${data.members.length} steppers`),
   ];
 
-  rows.push(...tdcPlacements(member.placements));
+  rows.push(...orgPlacements(member.placements));
 
   return `<section class="placements">
     <h3>Where you sit</h3>
