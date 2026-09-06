@@ -74,39 +74,81 @@ export function matchRow(row, entities) {
 /* ------------------------------------------------------------------ scraping -- */
 
 /**
- * Every plausible leaderboard row on the page, as {name, href, steps, raised}.
+ * Every plausible leaderboard row on the page, grouped into lists.
  *
- * Written to be forgiving rather than precise: this runs against a page that
- * cannot be opened from the development sandbox, so it reads whatever tabular
- * markup is present and lets the caller decide whether the result is usable.
+ * Deliberately markup-agnostic. The first attempt assumed `<table>` and found
+ * none — the real leaderboard is built from something else — so this anchors on
+ * the one thing a leaderboard row must contain: a link to the fundraiser it
+ * ranks. From each link it climbs to the nearest ancestor that also carries a
+ * figure, and that ancestor is the row.
+ *
+ * Rows are grouped by their shared parent, which is what a list is regardless of
+ * whether it is a `<table>`, a `<ul>` or a stack of `<div>`s. The caller uses
+ * those groups the way it would have used separate tables, so the team ladder
+ * and the participant ladder keep their own field sizes.
  */
 export function extractRows() {
   const money = (text) => {
     const match = text.match(/\$\s*([\d,]+(?:\.\d+)?)/);
     return match ? Number(match[1].replace(/,/g, '')) : null;
   };
+
+  /**
+   * The largest bare number in the row, once dollar amounts are removed.
+   *
+   * Bounded by lookaround rather than `\b`, because inline markup means a row's
+   * text often has no space between the name and the figure — "Jules
+   * Rivera142,900". A leading `\b` finds no boundary between "a" and "1" there
+   * and matches from after the comma instead, silently turning 142,900 into
+   * 900 and scrambling the ranking. Largest wins so a leading position number
+   * or a member count cannot be mistaken for a step total.
+   */
   const steps = (text) => {
-    // A bare thousands-separated integer that isn't a dollar amount.
-    const match = text.replace(/\$\s*[\d,.]+/g, ' ').match(/\b(\d[\d,]{2,})\b/);
-    return match ? Number(match[1].replace(/,/g, '')) : null;
+    const withoutMoney = text.replace(/\$\s*[\d,]+(?:\.\d+)?/g, ' ');
+    const found = withoutMoney.match(/(?<![\d,.])(?:\d{1,3}(?:,\d{3})+|\d{3,})(?![\d,.])/g);
+    return found ? Math.max(...found.map((value) => Number(value.replace(/,/g, '')))) : null;
   };
 
-  const tables = [...document.querySelectorAll('table')];
-  return tables.map((table) =>
-    [...table.querySelectorAll('tbody tr, tr')]
-      .map((tr) => {
-        const cells = [...tr.querySelectorAll('td')];
-        if (cells.length === 0) return null;
-        const text = tr.innerText.replace(/\s+/g, ' ').trim();
-        const link = tr.querySelector('a[href]');
-        const name = (link?.innerText || cells[1]?.innerText || cells[0]?.innerText || '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        if (!name) return null;
-        return { name, href: link?.getAttribute('href') ?? '', steps: steps(text), raised: money(text) };
-      })
-      .filter(Boolean),
-  );
+  /** A row's text should be one entry, not half the page. */
+  const MAX_ROW_TEXT = 400;
+  const MAX_CLIMB = 6;
+
+  const groups = new Map();
+
+  for (const link of document.querySelectorAll('a[href*="/fundraisers/"]')) {
+    const name = (link.innerText || '').replace(/\s+/g, ' ').trim();
+    if (!name) continue;
+
+    // Climb to the smallest ancestor that carries both the name and a figure.
+    let row = link;
+    let text = '';
+    let hops = 0;
+    while (row && hops <= MAX_CLIMB) {
+      text = (row.innerText || '').replace(/\s+/g, ' ').trim();
+      if (text.length <= MAX_ROW_TEXT && /\d[\d,]{2,}|\$/.test(text)) break;
+      if (text.length > MAX_ROW_TEXT) {
+        row = null;
+        break;
+      }
+      row = row.parentElement;
+      hops += 1;
+    }
+    if (!row || !text) continue;
+
+    const parent = row.parentElement;
+    if (!parent) continue;
+    if (!groups.has(parent)) groups.set(parent, []);
+    // One row per fundraiser: a card linking to the same person twice (photo
+    // and name, say) would otherwise be counted as two entries in the field.
+    const bucket = groups.get(parent);
+    const href = link.getAttribute('href') ?? '';
+    if (bucket.some((existing) => existing.href === href)) continue;
+    bucket.push({ name, href, steps: steps(text), raised: money(text) });
+  }
+
+  // Two rows do not make a leaderboard; dropping singletons keeps stray
+  // "view profile" links elsewhere on the page out of the field size.
+  return [...groups.values()].filter((rows) => rows.length >= 3);
 }
 
 /**
@@ -188,11 +230,14 @@ async function main() {
       throw new Error('still on the login after signing in — credentials rejected or the flow changed');
     }
 
-    await page.waitForSelector('table tr', { timeout: NAV_TIMEOUT_MS });
+    // A leaderboard row has to link to the fundraiser it ranks, whatever it is
+    // built from. Waiting for a table was the first attempt's mistake: the page
+    // renders fine and has no tables at all.
+    await page.waitForSelector('a[href*="/fundraisers/"]', { timeout: NAV_TIMEOUT_MS });
     const tables = await page.evaluate(extractRows);
 
-    // Which table is which is decided by what actually matched, not by
-    // position — the page is free to reorder its sections.
+    // Which list is which is decided by what actually matched, not by position
+    // — the page is free to reorder its sections.
     let teamPlacements = { steps: new Map(), raised: new Map() };
     let memberPlacements = { steps: new Map(), raised: new Map() };
 
@@ -210,6 +255,19 @@ async function main() {
       memberPlacements.steps.size + memberPlacements.raised.size;
 
     if (matched === 0) {
+      // Structure only. This log is public, so it never carries another
+      // organisation's names or figures — just enough shape to fix the parsing.
+      const shape = await page.evaluate(() => ({
+        links: document.querySelectorAll('a[href*="/fundraisers/"]').length,
+        tables: document.querySelectorAll('table').length,
+        lists: document.querySelectorAll('ul, ol').length,
+        title: document.title,
+      }));
+      console.error(
+        `Page shape: ${shape.links} fundraiser links, ${shape.tables} tables, ` +
+          `${shape.lists} lists, title "${shape.title}"`,
+      );
+      console.error(`Grouped into ${tables.length} lists of sizes [${tables.map((r) => r.length).join(', ')}]`);
       throw new Error(
         `read ${tables.flat().length} rows but matched none of our ${teams.length} teams or ${members.length} members`,
       );
