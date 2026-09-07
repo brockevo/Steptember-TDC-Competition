@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-07T02:12:27.034Z",
+    "lastUpdated": "2026-09-07T04:12:36.123Z",
     "dataSource": "live"
   },
   "teams": [
@@ -99,7 +99,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 111370,
+          "steps": 114309,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 124866,
+          "steps": 131324,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
