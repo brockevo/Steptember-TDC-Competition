@@ -7,6 +7,7 @@ import { chartBlock, initChartTooltips } from './chart.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
 import { initProfileView } from './profile.js';
+import { ORG_NAME } from './stats.js';
 import { podium } from './podium.js';
 import {
   escapeHtml,
@@ -235,11 +236,11 @@ function rosterRow(member, currency) {
 }
 
 /**
- * Where a team sits inside TDC, from the org leaderboard behind the Steptember
- * login. Nothing at all until that scrape has run, so the card is unchanged on
- * a fresh checkout or any time the ranking step failed.
+ * Where a team sits inside the organisation, from the leaderboard behind the
+ * Steptember login. Nothing at all until that scrape has run, so the card is
+ * unchanged on a fresh checkout or any time the ranking step failed.
  */
-function tdcStrip(placements, noun) {
+function orgStrip(placements, noun) {
   if (!placements?.steps && !placements?.raised) return '';
   const parts = [];
   if (placements.steps) {
@@ -250,7 +251,7 @@ function tdcStrip(placements, noun) {
   if (placements.raised) {
     parts.push(`<span><strong>${ordinal(placements.raised.rank)}</strong> on fundraising</span>`);
   }
-  return `<p class="tdc-strip"><span class="tdc-label">Across TDC</span>${parts.join('')}</p>`;
+  return `<p class="org-strip"><span class="org-label">Across ${escapeHtml(ORG_NAME)}</span>${parts.join('')}</p>`;
 }
 
 function renderTeams(data) {
@@ -294,7 +295,7 @@ function renderTeams(data) {
           </div>
         </div>
 
-        ${tdcStrip(team.placements, 'teams')}
+        ${orgStrip(team.placements, 'teams')}
 
         ${chartBlock({
           title: 'Cumulative steps',

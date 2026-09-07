@@ -56,11 +56,17 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
   summing a team or the whole field — otherwise a day where somebody hadn't synced would show the
   group's total dropping.
 
-### The TDC leaderboard, and the login it needs
+### The organisation leaderboard, and the login it needs
 
-Team and member figures come from public pages. **Placements across TDC** do not — the org
+Our three teams are registered under the **KPMG** organisation on Steptember, so that is the field
+they are ranked in — every KPMG team and participant, not just the twelve of us.
+
+Team and member figures come from public pages. **Placements across the organisation** do not — that
 leaderboard redirects to a sign-in when logged out, and its login form is rendered client-side, so
-there is no form to POST to. `scripts/fetch-org-leaderboard.mjs` drives a real browser instead.
+there is no form to POST to. `scripts/fetch-org-leaderboard.mjs` drives a real browser instead. It
+tries a handful of candidate pages under the organisation and uses the first that carries a ladder
+with our teams or members on it, logging the shape of each — counts and the page's own headings, never
+another participant's name or figures — so a layout change is diagnosable from the job log.
 
 It runs from the same two-hourly job, straight after the public scrape, and needs two repository
 secrets under **Settings → Secrets and variables → Actions**:
@@ -129,7 +135,7 @@ assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets
 data/history.json           each member's running step total per day
-data/placements.json        where our teams and people sit across TDC
+data/placements.json        where our teams and people sit across the organisation
 scripts/fetch-steptember.mjs  the public team-page scraper
 scripts/fetch-org-leaderboard.mjs  the TDC leaderboard scrape, which needs a login
 ```

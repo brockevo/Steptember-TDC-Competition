@@ -1,5 +1,6 @@
 /**
- * Reads where our teams and people sit on TDC's Steptember leaderboard.
+ * Reads where our teams and people sit on our organisation's Steptember
+ * leaderboard. Our teams are registered under KPMG, so that is the field.
  *
  * Unlike the public team pages, this one needs a session: the leaderboard
  * redirects to the login when signed out, and the login form is rendered
@@ -12,10 +13,10 @@
  *    The step and donation refresh is what the site actually depends on; this
  *    is a garnish, and a broken garnish must not cost us the meal.
  *
- * 2. **It only ever writes our own rows.** The leaderboard lists every TDC team
- *    and participant. We take a rank and a field size for our three teams and
- *    twelve people, and nothing else — enough to say where we sit without
- *    republishing anyone else's figures.
+ * 2. **It only ever writes our own rows.** The leaderboard lists every team and
+ *    participant in the organisation. We take a rank and a field size for our
+ *    three teams and twelve people, and nothing else — enough to say where we
+ *    sit without republishing anyone else's figures.
  *
  * Credentials come from the environment and are never logged, never written to
  * `data/`, and never reach the browser bundle.
@@ -30,7 +31,31 @@ const TEAMS_FILE = resolve(ROOT, 'data/teams.json');
 const PLACEMENTS_FILE = resolve(ROOT, 'data/placements.json');
 
 const ORIGIN = 'https://www.steptember.org.au';
-const LEADERBOARD_URL = `${ORIGIN}/login/view/org-leaderboard`;
+
+/**
+ * Our teams are registered under the KPMG organisation, so KPMG's page is the
+ * field we are ranked in. Overridable in case that ever changes.
+ */
+const ORG = process.env.STEPTEMBER_ORG ?? 'kpmg';
+
+/** Where the login is driven from; also the first place we look for a ladder. */
+const LOGIN_URL = `${ORIGIN}/login/view/org-leaderboard`;
+
+/**
+ * Pages that might carry the organisation ladder, tried in order until one
+ * yields rows we recognise.
+ *
+ * A list rather than a single URL because the first attempt landed somewhere
+ * with only three fundraiser links on it — the org's own page among them — so
+ * the ladder plainly lives somewhere other than where I first guessed, and one
+ * run that tries several is worth more than several runs that each try one.
+ */
+const CANDIDATE_URLS = [
+  `${ORIGIN}/login/view/org-leaderboard`,
+  `${ORIGIN}/fundraisers/${ORG}`,
+  `${ORIGIN}/fundraisers/${ORG}/leaderboard`,
+  `${ORIGIN}/organisations/${ORG}`,
+];
 
 const EMAIL = process.env.STEPTEMBER_EMAIL;
 const PASSWORD = process.env.STEPTEMBER_PASSWORD;
@@ -148,7 +173,161 @@ export function extractRows() {
 
   // Two rows do not make a leaderboard; dropping singletons keeps stray
   // "view profile" links elsewhere on the page out of the field size.
-  return [...groups.values()].filter((rows) => rows.length >= 3);
+  const linked = [...groups.values()].filter((rows) => rows.length >= 3);
+  if (linked.length > 0) return linked;
+
+  /* ---- second pass: ladders whose rows are not links --------------------- */
+
+  // The organisation leaderboard names its sections and does not link its rows
+  // — the whole page carries three fundraiser links, all of them chrome. So
+  // find the ladders by their headings instead, which is what the page itself
+  // gives us to work with.
+  const LADDER_HEADING = /top\s+(steppers|fundraisers|teams)/i;
+
+  const ladders = [];
+  for (const heading of document.querySelectorAll('h1, h2, h3, h4')) {
+    if (!LADDER_HEADING.test(heading.innerText || '')) continue;
+
+    // The block after the heading, up to the next heading.
+    let block = heading.nextElementSibling;
+    while (block && /^H[1-6]$/.test(block.tagName) === false) {
+      const rows = rowsWithin(block);
+      if (rows.length >= 3) {
+        ladders.push(rows);
+        break;
+      }
+      block = block.nextElementSibling;
+    }
+  }
+  return ladders;
+
+  /**
+   * The repeated siblings inside a block that each carry a figure.
+   *
+   * Same idea as the grouping above — a ladder is a set of sibling elements
+   * that all look alike — but without needing a link to anchor on. The deepest
+   * such set wins, so a wrapper holding one big blob of text loses to the row
+   * elements inside it.
+   */
+  function rowsWithin(block) {
+    let best = [];
+    const consider = (parent) => {
+      const children = [...parent.children];
+      if (children.length < 3) return;
+      const rows = children
+        .map((child) => {
+          const text = (child.innerText || '').replace(/\s+/g, ' ').trim();
+          if (!text || text.length > MAX_ROW_TEXT) return null;
+          const value = steps(text);
+          const amount = money(text);
+          if (value === null && amount === null) return null;
+          return { text, steps: value, raised: amount };
+        })
+        .filter(Boolean);
+      // Most of the siblings must look like rows, or this is not a ladder.
+      if (rows.length >= 3 && rows.length >= children.length - 1) best = rows;
+    };
+
+    consider(block);
+    for (const descendant of block.querySelectorAll('*')) consider(descendant);
+
+    return best.map((row) => ({
+      name: nameFrom(row.text, row.steps, row.raised),
+      href: '',
+      steps: row.steps,
+      raised: row.raised,
+    }));
+  }
+
+  /**
+   * The name left over once a row's figures and leading position are removed.
+   *
+   * "1 Anna Haynes 74,122" is all one string by the time innerText has run, so
+   * the name is what remains after taking the numbers out — not a cell we can
+   * address.
+   */
+  function nameFrom(text, value, amount) {
+    let name = text;
+    if (amount !== null) name = name.replace(/\$\s*[\d,]+(?:\.\d+)?/g, ' ');
+    if (value !== null) {
+      name = name.replace(
+        new RegExp(`(?<![\\d,.])${value.toLocaleString('en-AU')}(?![\\d,.])`, 'g'),
+        ' ',
+      );
+      name = name.replace(new RegExp(`(?<![\\d,.])${value}(?![\\d,.])`, 'g'), ' ');
+    }
+    // The leading position number, and any stray unit words. No whitespace is
+    // required after the position: inline spans mean innerText runs it straight
+    // into the name — "1Jules Rivera" — and a name left with that prefix
+    // normalises to "1julesrivera" and matches nobody. The lookahead keeps it
+    // from biting a name that legitimately starts with a digit.
+    return name
+      .replace(/^\s*\d{1,4}[.)]?\s*(?=[A-Za-z])/, '')
+      .replace(/\b(steps?|raised|km)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+}
+
+/**
+ * The organisation-wide totals on the page: how many are taking part, how many
+ * teams, and the combined steps and money.
+ *
+ * These are what make "ahead of 82% of KPMG" and "against the org's average"
+ * possible. They are **aggregates, not people** — four numbers describing the
+ * whole field, with nobody's individual row among them.
+ *
+ * Read by pairing a number with a label word near it, because that is how the
+ * page presents them: a value and a caption, in whatever element the design
+ * happened to use. Anything not found is simply absent, and every figure built
+ * on it disappears with it rather than being estimated.
+ */
+export function extractAggregates() {
+  // No leading \b on any of these. Inline markup runs the value into its
+  // caption — "1,750,420steps" — and a boundary between "0" and "s" does not
+  // exist, so requiring one finds nothing at all. The trailing boundary stays,
+  // which is what keeps "steps" from matching inside "steppers".
+  const LABELS = [
+    ['participants', /(participants?|steppers?|walkers?|members?|people)\b/i],
+    ['teams', /teams?\b/i],
+    ['steps', /steps?\b/i],
+    ['raised', /(raised|donations?|fundraised)\b/i],
+  ];
+
+  const found = {};
+
+  for (const element of document.querySelectorAll('*')) {
+    const text = (element.innerText || '').replace(/\s+/g, ' ').trim();
+    // Short enough to be a stat block rather than a section of the page.
+    if (!text || text.length > 60) continue;
+
+    const money = text.match(/\$\s*([\d,]+(?:\.\d+)?)/g);
+    const bare = text.match(/(?<![\d,.$])(?:\d{1,3}(?:,\d{3})+|\d+)(?![\d,.])/g);
+    const tokens = (money?.length ?? 0) + (bare?.length ?? 0);
+
+    // Exactly one number, or this is a container rather than a stat block. The
+    // wrapper around four stats reads "1,750,420steps$12,480raised191participants
+    // 52teams", carries every label at once, and would hand its first number to
+    // all of them.
+    if (tokens !== 1) continue;
+
+    for (const [key, pattern] of LABELS) {
+      if (!pattern.test(text)) continue;
+      // "Raised" is the only one written as currency; the rest are counts.
+      const raw =
+        key === 'raised'
+          ? money?.[0]?.replace(/[$\s]/g, '')
+          : bare?.[0];
+      if (!raw) continue;
+      const value = Number(raw.replace(/,/g, ''));
+      if (!Number.isFinite(value) || value <= 0) continue;
+      // The largest wins: an organisation total is bigger than any one row's
+      // figure that happens to sit beside the same word.
+      if (!(key in found) || value > found[key]) found[key] = value;
+    }
+  }
+
+  return found;
 }
 
 /**
@@ -164,7 +343,19 @@ export function placeOurs(rows, entities, measure) {
     .sort((a, b) => b[measure] - a[measure]);
   if (ordered.length === 0) return new Map();
 
+  // On a ladder that doesn't link its rows, a name is all we have to match on,
+  // and the organisation is far bigger than our twelve. Two people called the
+  // same thing would give one of them the other's rank, so count the names
+  // first and decline any that appear twice — a missing placement is a row
+  // that doesn't render, which is much better than a confidently wrong one.
+  const nameCounts = new Map();
+  for (const row of ordered) {
+    const key = normalise(row.name);
+    nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
+  }
+
   const placements = new Map();
+  const ambiguous = [];
   let rank = 0;
   let previousValue = null;
 
@@ -175,7 +366,21 @@ export function placeOurs(rows, entities, measure) {
       previousValue = row[measure];
     }
     const ours = matchRow(row, entities);
-    if (ours) placements.set(ours.id, { rank, of: ordered.length });
+    if (!ours) continue;
+    // A row that carries a slug identified itself; only name-matched rows are
+    // at risk of the collision above.
+    if (!slugFromUrl(row.href) && nameCounts.get(normalise(row.name)) > 1) {
+      ambiguous.push(ours.name);
+      continue;
+    }
+    placements.set(ours.id, { rank, of: ordered.length });
+  }
+
+  if (ambiguous.length > 0) {
+    console.warn(
+      `  ! skipped ${ambiguous.length} ${measure} placement(s) — more than one row on this ` +
+        `ladder carries that name, so the rank could belong to someone else: ${ambiguous.join(', ')}`,
+    );
   }
 
   return placements;
@@ -189,6 +394,134 @@ export function byEntity(placementsByMeasure) {
   for (const [measure, placements] of Object.entries(placementsByMeasure)) {
     for (const [id, placement] of placements) {
       out[id] = { ...(out[id] ?? {}), [measure]: placement };
+    }
+  }
+  return out;
+}
+
+/**
+ * Discards any "total" that is really one row's figure.
+ *
+ * A ladder row reads "412,880 steps", which looks exactly like an organisation
+ * total sitting beside the word "steps" — and on a page with no stat block that
+ * is what gets picked up. An organisation's total cannot equal, or be smaller
+ * than, a single participant's, so a candidate failing that test is a row and
+ * is dropped. Getting this wrong would not break anything visibly; it would
+ * quietly make every "against the average" figure wrong, which is worse.
+ */
+function sane(candidates, tables) {
+  const rowValues = new Set();
+  // Per measure, because a money total is naturally far smaller than a step
+  // total: comparing $12,480 raised against 412,880 steps would throw away a
+  // perfectly good figure.
+  const biggest = { steps: 0, raised: 0 };
+  for (const rows of tables) {
+    for (const row of rows) {
+      for (const measure of ['steps', 'raised']) {
+        if (Number.isFinite(row[measure])) {
+          rowValues.add(row[measure]);
+          biggest[measure] = Math.max(biggest[measure], row[measure]);
+        }
+      }
+    }
+  }
+
+  const kept = {};
+  for (const [key, value] of Object.entries(candidates)) {
+    if (rowValues.has(value)) continue;
+    if (key in biggest && value <= biggest[key]) continue;
+    kept[key] = value;
+  }
+  return kept;
+}
+
+/**
+ * Opens one candidate page and reports what it holds.
+ *
+ * Never throws: a candidate that 404s, renders nothing, or holds a different
+ * page entirely is an answer, not a failure — the caller tries the next one.
+ * It also waits for content rather than gating on it, since the ladder is
+ * rendered client-side and the first attempt timed out on a `visible` check
+ * against links that were present but hidden.
+ */
+async function readLadder(page, url, teams, members) {
+  const empty = { steps: new Map(), raised: new Map() };
+  const nothing = {
+    teamPlacements: empty,
+    memberPlacements: empty,
+    matched: 0,
+    tables: [],
+    groups: [],
+    shape: { links: 0, tables: 0, headings: '' },
+  };
+
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT_MS });
+  } catch (error) {
+    return nothing;
+  }
+
+  // Attached rather than visible, and non-fatal: the point is to look, not to
+  // insist. A page that never grows a ladder simply reports none.
+  await page
+    .waitForSelector('a[href*="/fundraisers/"]', { state: 'attached', timeout: 15_000 })
+    .catch(() => {});
+
+  const shape = await page.evaluate(() => ({
+    links: document.querySelectorAll('a[href*="/fundraisers/"]').length,
+    tables: document.querySelectorAll('table').length,
+    // The organisation's own headings, which describe the page rather than
+    // anyone on it — safe to print, and the quickest way to see where we are.
+    headings: [...document.querySelectorAll('h1, h2')]
+      .map((h) => (h.innerText || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 6)
+      .join(' / '),
+  }));
+
+  const tables = await page.evaluate(extractRows);
+  const aggregates = sane(await page.evaluate(extractAggregates), tables);
+
+  const teamPlacements = { steps: new Map(), raised: new Map() };
+  const memberPlacements = { steps: new Map(), raised: new Map() };
+  for (const rows of tables) {
+    for (const measure of ['steps', 'raised']) {
+      const forTeams = placeOurs(rows, teams, measure);
+      if (forTeams.size > teamPlacements[measure].size) teamPlacements[measure] = forTeams;
+      const forMembers = placeOurs(rows, members, measure);
+      if (forMembers.size > memberPlacements[measure].size) memberPlacements[measure] = forMembers;
+    }
+  }
+
+  return {
+    teamPlacements,
+    memberPlacements,
+    matched:
+      teamPlacements.steps.size + teamPlacements.raised.size +
+      memberPlacements.steps.size + memberPlacements.raised.size,
+    tables,
+    aggregates,
+    groups: tables.map((rows) => rows.length),
+    shape,
+  };
+}
+
+/**
+ * Carries the last known rank forward, so the site can say "up three places".
+ *
+ * `previous` is the rank at the last successful read, whatever that was — not a
+ * running history. One extra number, and it turns a static position into the
+ * thing people actually check.
+ */
+function withMovement(current, before) {
+  const out = {};
+  for (const [id, measures] of Object.entries(current)) {
+    out[id] = {};
+    for (const [measure, placement] of Object.entries(measures)) {
+      const wasRank = before?.[id]?.[measure]?.rank;
+      out[id][measure] = Number.isFinite(wasRank)
+        ? { ...placement, previous: wasRank }
+        : placement;
     }
   }
   return out;
@@ -213,7 +546,7 @@ async function main() {
   page.setDefaultTimeout(NAV_TIMEOUT_MS);
 
   try {
-    await page.goto(LEADERBOARD_URL, { waitUntil: 'domcontentloaded' });
+    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
 
     // The login is a client-rendered overlay, so wait for the field itself
     // rather than for a URL or a form element that may never exist.
@@ -225,59 +558,55 @@ async function main() {
       page.click('button[type="submit"], input[type="submit"]'),
     ]);
 
-    await page.goto(LEADERBOARD_URL, { waitUntil: 'networkidle' });
+    await page.goto(LOGIN_URL, { waitUntil: 'networkidle' });
     if (await page.$('input[type="password"]')) {
       throw new Error('still on the login after signing in — credentials rejected or the flow changed');
     }
+    console.log('Signed in.');
 
-    // A leaderboard row has to link to the fundraiser it ranks, whatever it is
-    // built from. Waiting for a table was the first attempt's mistake: the page
-    // renders fine and has no tables at all.
-    await page.waitForSelector('a[href*="/fundraisers/"]', { timeout: NAV_TIMEOUT_MS });
-    const tables = await page.evaluate(extractRows);
-
-    // Which list is which is decided by what actually matched, not by position
-    // — the page is free to reorder its sections.
     let teamPlacements = { steps: new Map(), raised: new Map() };
     let memberPlacements = { steps: new Map(), raised: new Map() };
+    let matched = 0;
+    let tables = [];
+    let aggregates = {};
 
-    for (const rows of tables) {
-      for (const measure of ['steps', 'raised']) {
-        const forTeams = placeOurs(rows, teams, measure);
-        if (forTeams.size > teamPlacements[measure].size) teamPlacements[measure] = forTeams;
-        const forMembers = placeOurs(rows, members, measure);
-        if (forMembers.size > memberPlacements[measure].size) memberPlacements[measure] = forMembers;
+    for (const url of CANDIDATE_URLS) {
+      const attempt = await readLadder(page, url, teams, members);
+      // Structure only: counts, the page's own title and headings. Never
+      // another participant's name or figures — this log is public.
+      console.log(
+        `  ${url.replace(ORIGIN, '')} → ${attempt.shape.links} fundraiser links, ` +
+          `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}], ` +
+          `matched ${attempt.matched} of ours` +
+          (Object.keys(attempt.aggregates).length
+            ? ` · totals: ${Object.entries(attempt.aggregates).map(([k, v]) => `${k}=${v}`).join(' ')}`
+            : '') +
+          (attempt.shape.headings ? ` · headings: ${attempt.shape.headings}` : ''),
+      );
+      // Aggregates accumulate across pages — the ladder and the org's own page
+      // each carry some of them — while placements come from the best page.
+      aggregates = { ...attempt.aggregates, ...aggregates };
+      if (attempt.matched > matched) {
+        ({ teamPlacements, memberPlacements, matched, tables } = attempt);
       }
+      // Every team and every member on one page is as good as it gets.
+      if (matched >= teams.length + members.length) break;
     }
-
-    const matched =
-      teamPlacements.steps.size + teamPlacements.raised.size +
-      memberPlacements.steps.size + memberPlacements.raised.size;
 
     if (matched === 0) {
-      // Structure only. This log is public, so it never carries another
-      // organisation's names or figures — just enough shape to fix the parsing.
-      const shape = await page.evaluate(() => ({
-        links: document.querySelectorAll('a[href*="/fundraisers/"]').length,
-        tables: document.querySelectorAll('table').length,
-        lists: document.querySelectorAll('ul, ol').length,
-        title: document.title,
-      }));
-      console.error(
-        `Page shape: ${shape.links} fundraiser links, ${shape.tables} tables, ` +
-          `${shape.lists} lists, title "${shape.title}"`,
-      );
-      console.error(`Grouped into ${tables.length} lists of sizes [${tables.map((r) => r.length).join(', ')}]`);
       throw new Error(
-        `read ${tables.flat().length} rows but matched none of our ${teams.length} teams or ${members.length} members`,
+        `none of the ${CANDIDATE_URLS.length} candidate pages carried a ladder with ` +
+          `our ${teams.length} teams or ${members.length} members on it`,
       );
     }
 
+    const before = previous ? JSON.parse(previous) : null;
     const next = {
       updated: new Date().toISOString(),
-      scope: 'tdc',
-      teams: byEntity(teamPlacements),
-      members: byEntity(memberPlacements),
+      scope: ORG,
+      org: { name: ORG.toUpperCase(), ...aggregates },
+      teams: withMovement(byEntity(teamPlacements), before?.teams),
+      members: withMovement(byEntity(memberPlacements), before?.members),
     };
     const serialised = `${JSON.stringify(next, null, 2)}\n`;
 
@@ -321,7 +650,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   main().catch((error) => {
   // Deliberately the message only: an error from the browser can carry the page
   // it was on, and that page has our credentials typed into it.
-    console.error(`Could not read the TDC leaderboard: ${error.message}`);
+    console.error(`Could not read the ${ORG.toUpperCase()} leaderboard: ${error.message}`);
     console.error('Leaving the committed placements untouched.');
     process.exit(1);
   });

@@ -7,7 +7,7 @@
 
 import { avatar } from './ui.js';
 import { chartBlock } from './chart.js';
-import { fundraisingLane, memberStats, targetLane, tdcPlacements } from './stats.js';
+import { fundraisingLane, memberStats, orgPlacements, targetLane } from './stats.js';
 import { escapeHtml, formatNumber } from './format.js';
 
 const HASH_PREFIX = '#member/';
@@ -44,7 +44,7 @@ function dailyChart(deltas) {
 
 function buildProfile(member, data) {
   const { competition, clock } = data;
-  const stats = [...memberStats(member, data), ...tdcPlacements(member.placements)];
+  const stats = [...memberStats(member, data), ...orgPlacements(member.placements)];
 
   const deltas = data.history.deltasFor(member.id);
 
