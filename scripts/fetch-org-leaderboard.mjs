@@ -214,37 +214,65 @@ export function extractRows() {
     const consider = (parent) => {
       const children = [...parent.children];
       if (children.length < 3) return;
-      const rows = children
-        .map((child) => {
-          const text = (child.innerText || '').replace(/\s+/g, ' ').trim();
-          if (!text || text.length > MAX_ROW_TEXT) return null;
-          const value = steps(text);
-          const amount = money(text);
-          if (value === null && amount === null) return null;
-          return { text, steps: value, raised: amount };
-        })
-        .filter(Boolean);
+      const rows = children.map(readRow).filter(Boolean);
       // Most of the siblings must look like rows, or this is not a ladder.
       if (rows.length >= 3 && rows.length >= children.length - 1) best = rows;
     };
 
     consider(block);
     for (const descendant of block.querySelectorAll('*')) consider(descendant);
+    return best;
+  }
 
-    return best.map((row) => ({
-      name: nameFrom(row.text, row.steps, row.raised),
-      href: '',
-      steps: row.steps,
-      raised: row.raised,
-    }));
+  /**
+   * One row, read from its own cells wherever it has them.
+   *
+   * Cells first, because a row's text is concatenated by the time innerText has
+   * run and the pieces can corrupt each other. A name ending in a digit is the
+   * case that matters: "Person 01" beside "147,300" reads as "1Person 01147,300",
+   * where "147,300" has a digit immediately before it and no number can be
+   * safely picked out at all. That row is then dropped, silently shrinking the
+   * field and shifting every rank below it — the sort of failure that leaves a
+   * plausible-looking result. Reading the cells separately avoids the whole
+   * problem; the text fallback is only for rows that have no inner structure.
+   */
+  function readRow(element) {
+    const whole = (element.innerText || '').replace(/\s+/g, ' ').trim();
+    if (!whole || whole.length > MAX_ROW_TEXT) return null;
+
+    const cells = [...element.children]
+      .map((cell) => (cell.innerText || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+
+    if (cells.length >= 2) {
+      // A leading bare integer is the printed position, not a figure. Dropping
+      // it first matters on the fundraiser ladder, where the only plain number
+      // in the row is that position — "1 · Jules Rivera · $400.00" — and
+      // keeping it would record one step for everyone on the board.
+      const body = /^\d{1,4}$/.test(cells[0]) ? cells.slice(1) : cells;
+
+      const counts = body.filter((cell) => /^\d[\d,]*$/.test(cell));
+      const monies = body.filter((cell) => /^\$\s*[\d,]+(?:\.\d+)?$/.test(cell));
+      const value = counts.length
+        ? Math.max(...counts.map((cell) => Number(cell.replace(/,/g, ''))))
+        : null;
+      const amount = monies.length ? money(monies[0]) : null;
+      if (value === null && amount === null) return null;
+
+      const name = body.find((cell) => /[A-Za-z]/.test(cell) && !monies.includes(cell));
+      if (!name) return null;
+      return { name, href: '', steps: value, raised: amount };
+    }
+
+    const value = steps(whole);
+    const amount = money(whole);
+    if (value === null && amount === null) return null;
+    return { name: nameFrom(whole, value, amount), href: '', steps: value, raised: amount };
   }
 
   /**
    * The name left over once a row's figures and leading position are removed.
-   *
-   * "1 Anna Haynes 74,122" is all one string by the time innerText has run, so
-   * the name is what remains after taking the numbers out — not a cell we can
-   * address.
+   * Only used for rows with no cells of their own to read.
    */
   function nameFrom(text, value, amount) {
     let name = text;
@@ -321,6 +349,11 @@ export function extractAggregates() {
       if (!raw) continue;
       const value = Number(raw.replace(/,/g, ''));
       if (!Number.isFinite(value) || value <= 0) continue;
+      // An organisation has hundreds of people, not hundreds of thousands. The
+      // last run read participants=467221 for a field of 191 — almost certainly
+      // a national counter sitting on the same page. A figure that large is not
+      // ours, and guessing would make every average wrong.
+      if ((key === 'participants' || key === 'teams') && value > 100_000) continue;
       // The largest wins: an organisation total is bigger than any one row's
       // figure that happens to sit beside the same word.
       if (!(key in found) || value > found[key]) found[key] = value;
@@ -435,6 +468,79 @@ function sane(candidates, tables) {
   return kept;
 }
 
+/** A ladder's rows are the same row twice if these match. */
+const rowKey = (row) => `${normalise(row.name)}|${row.steps}|${row.raised}`;
+
+/**
+ * Reads a ladder across its pages, clicking "next" until it runs out.
+ *
+ * The organisation leaderboard shows five at a time out of 191, so a single
+ * read can only ever see the top five — and none of our twelve are in it. The
+ * field only exists if we walk it.
+ *
+ * Rows accumulate across pages and are keyed so a control that re-renders the
+ * same page cannot inflate the field size. Three independent stops: the button
+ * disappears or disables, a page adds nothing new, or the cap is hit. A rank is
+ * only as good as the field it came from, so an incomplete walk must not be
+ * mistaken for a complete one.
+ */
+async function readAllPages(page) {
+  const NEXT = /^(next|more|show more|load more|view more|see more|›|»|→)\s*(page)?$/i;
+  /** 191 participants at five a page is 39; the cap is slack, not a target. */
+  const MAX_PAGES = 80;
+
+  const merged = [];
+  const seen = [];
+  let pages = 0;
+  let exhausted = true;
+
+  for (let round = 0; round < MAX_PAGES; round += 1) {
+    const groups = await page.evaluate(extractRows);
+
+    let added = 0;
+    groups.forEach((rows, index) => {
+      merged[index] ??= [];
+      seen[index] ??= new Set();
+      for (const row of rows) {
+        const key = rowKey(row);
+        if (seen[index].has(key)) continue;
+        seen[index].add(key);
+        merged[index].push(row);
+        added += 1;
+      }
+    });
+
+    pages = round + 1;
+    // A page that adds nothing means the control is looping or we are done.
+    if (round > 0 && added === 0) break;
+
+    const clicked = await page
+      .evaluate((pattern) => {
+        const source = new RegExp(pattern.source, pattern.flags);
+        const controls = [...document.querySelectorAll('button, a, [role="button"]')];
+        const next = controls.find((control) => {
+          const label =
+            (control.innerText || control.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+          if (!source.test(label)) return false;
+          if (control.disabled || control.getAttribute('aria-disabled') === 'true') return false;
+          return control.offsetParent !== null;
+        });
+        if (!next) return false;
+        next.click();
+        return true;
+      }, { source: NEXT.source, flags: NEXT.flags })
+      .catch(() => false);
+
+    if (!clicked) break;
+    // Client-side paging, so there is nothing to wait on but the render.
+    await page.waitForTimeout(400);
+
+    if (round === MAX_PAGES - 1) exhausted = false;
+  }
+
+  return { ladders: merged.filter((rows) => rows.length >= 3), pages, exhausted };
+}
+
 /**
  * Opens one candidate page and reports what it holds.
  *
@@ -451,7 +557,10 @@ async function readLadder(page, url, teams, members) {
     memberPlacements: empty,
     matched: 0,
     tables: [],
+    aggregates: {},
     groups: [],
+    pages: 0,
+    exhausted: true,
     shape: { links: 0, tables: 0, headings: '' },
   };
 
@@ -479,7 +588,8 @@ async function readLadder(page, url, teams, members) {
       .join(' / '),
   }));
 
-  const tables = await page.evaluate(extractRows);
+  const walk = await readAllPages(page);
+  const tables = walk.ladders;
   const aggregates = sane(await page.evaluate(extractAggregates), tables);
 
   const teamPlacements = { steps: new Map(), raised: new Map() };
@@ -502,6 +612,8 @@ async function readLadder(page, url, teams, members) {
     tables,
     aggregates,
     groups: tables.map((rows) => rows.length),
+    pages: walk.pages,
+    exhausted: walk.exhausted,
     shape,
   };
 }
@@ -568,7 +680,7 @@ async function main() {
     let memberPlacements = { steps: new Map(), raised: new Map() };
     let matched = 0;
     let tables = [];
-    let aggregates = {};
+    const readings = {};
 
     for (const url of CANDIDATE_URLS) {
       const attempt = await readLadder(page, url, teams, members);
@@ -576,16 +688,21 @@ async function main() {
       // another participant's name or figures — this log is public.
       console.log(
         `  ${url.replace(ORIGIN, '')} → ${attempt.shape.links} fundraiser links, ` +
-          `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}], ` +
+          `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}] ` +
+          `over ${attempt.pages} page(s)${attempt.exhausted ? '' : ' (CAPPED — field incomplete)'}, ` +
           `matched ${attempt.matched} of ours` +
           (Object.keys(attempt.aggregates).length
             ? ` · totals: ${Object.entries(attempt.aggregates).map(([k, v]) => `${k}=${v}`).join(' ')}`
             : '') +
           (attempt.shape.headings ? ` · headings: ${attempt.shape.headings}` : ''),
       );
-      // Aggregates accumulate across pages — the ladder and the org's own page
-      // each carry some of them — while placements come from the best page.
-      aggregates = { ...attempt.aggregates, ...aggregates };
+      // Every page's reading of the same figure is kept, so disagreement can be
+      // spotted below rather than silently resolved by whichever page came
+      // first. The last run had steps=161520000 on one page and steps=513147 on
+      // another; picking either would have been a coin toss presented as fact.
+      for (const [key, value] of Object.entries(attempt.aggregates)) {
+        (readings[key] ??= new Set()).add(value);
+      }
       if (attempt.matched > matched) {
         ({ teamPlacements, memberPlacements, matched, tables } = attempt);
       }
@@ -598,6 +715,18 @@ async function main() {
         `none of the ${CANDIDATE_URLS.length} candidate pages carried a ladder with ` +
           `our ${teams.length} teams or ${members.length} members on it`,
       );
+    }
+
+    // Only figures every page agreed on. A disagreement means we do not know
+    // which is the organisation's, so we keep neither and say so.
+    const aggregates = {};
+    for (const [key, values] of Object.entries(readings)) {
+      if (values.size === 1) aggregates[key] = [...values][0];
+      else console.warn(`  ! dropped ${key}: pages disagreed (${[...values].join(' vs ')})`);
+    }
+    if (aggregates.participants && aggregates.teams && aggregates.teams > aggregates.participants) {
+      console.warn('  ! dropped teams: more teams than participants, so one of them is not ours');
+      delete aggregates.teams;
     }
 
     const before = previous ? JSON.parse(previous) : null;
