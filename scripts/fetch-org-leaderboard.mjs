@@ -173,7 +173,161 @@ export function extractRows() {
 
   // Two rows do not make a leaderboard; dropping singletons keeps stray
   // "view profile" links elsewhere on the page out of the field size.
-  return [...groups.values()].filter((rows) => rows.length >= 3);
+  const linked = [...groups.values()].filter((rows) => rows.length >= 3);
+  if (linked.length > 0) return linked;
+
+  /* ---- second pass: ladders whose rows are not links --------------------- */
+
+  // The organisation leaderboard names its sections and does not link its rows
+  // — the whole page carries three fundraiser links, all of them chrome. So
+  // find the ladders by their headings instead, which is what the page itself
+  // gives us to work with.
+  const LADDER_HEADING = /top\s+(steppers|fundraisers|teams)/i;
+
+  const ladders = [];
+  for (const heading of document.querySelectorAll('h1, h2, h3, h4')) {
+    if (!LADDER_HEADING.test(heading.innerText || '')) continue;
+
+    // The block after the heading, up to the next heading.
+    let block = heading.nextElementSibling;
+    while (block && /^H[1-6]$/.test(block.tagName) === false) {
+      const rows = rowsWithin(block);
+      if (rows.length >= 3) {
+        ladders.push(rows);
+        break;
+      }
+      block = block.nextElementSibling;
+    }
+  }
+  return ladders;
+
+  /**
+   * The repeated siblings inside a block that each carry a figure.
+   *
+   * Same idea as the grouping above — a ladder is a set of sibling elements
+   * that all look alike — but without needing a link to anchor on. The deepest
+   * such set wins, so a wrapper holding one big blob of text loses to the row
+   * elements inside it.
+   */
+  function rowsWithin(block) {
+    let best = [];
+    const consider = (parent) => {
+      const children = [...parent.children];
+      if (children.length < 3) return;
+      const rows = children
+        .map((child) => {
+          const text = (child.innerText || '').replace(/\s+/g, ' ').trim();
+          if (!text || text.length > MAX_ROW_TEXT) return null;
+          const value = steps(text);
+          const amount = money(text);
+          if (value === null && amount === null) return null;
+          return { text, steps: value, raised: amount };
+        })
+        .filter(Boolean);
+      // Most of the siblings must look like rows, or this is not a ladder.
+      if (rows.length >= 3 && rows.length >= children.length - 1) best = rows;
+    };
+
+    consider(block);
+    for (const descendant of block.querySelectorAll('*')) consider(descendant);
+
+    return best.map((row) => ({
+      name: nameFrom(row.text, row.steps, row.raised),
+      href: '',
+      steps: row.steps,
+      raised: row.raised,
+    }));
+  }
+
+  /**
+   * The name left over once a row's figures and leading position are removed.
+   *
+   * "1 Anna Haynes 74,122" is all one string by the time innerText has run, so
+   * the name is what remains after taking the numbers out — not a cell we can
+   * address.
+   */
+  function nameFrom(text, value, amount) {
+    let name = text;
+    if (amount !== null) name = name.replace(/\$\s*[\d,]+(?:\.\d+)?/g, ' ');
+    if (value !== null) {
+      name = name.replace(
+        new RegExp(`(?<![\\d,.])${value.toLocaleString('en-AU')}(?![\\d,.])`, 'g'),
+        ' ',
+      );
+      name = name.replace(new RegExp(`(?<![\\d,.])${value}(?![\\d,.])`, 'g'), ' ');
+    }
+    // The leading position number, and any stray unit words. No whitespace is
+    // required after the position: inline spans mean innerText runs it straight
+    // into the name — "1Jules Rivera" — and a name left with that prefix
+    // normalises to "1julesrivera" and matches nobody. The lookahead keeps it
+    // from biting a name that legitimately starts with a digit.
+    return name
+      .replace(/^\s*\d{1,4}[.)]?\s*(?=[A-Za-z])/, '')
+      .replace(/\b(steps?|raised|km)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+}
+
+/**
+ * The organisation-wide totals on the page: how many are taking part, how many
+ * teams, and the combined steps and money.
+ *
+ * These are what make "ahead of 82% of KPMG" and "against the org's average"
+ * possible. They are **aggregates, not people** — four numbers describing the
+ * whole field, with nobody's individual row among them.
+ *
+ * Read by pairing a number with a label word near it, because that is how the
+ * page presents them: a value and a caption, in whatever element the design
+ * happened to use. Anything not found is simply absent, and every figure built
+ * on it disappears with it rather than being estimated.
+ */
+export function extractAggregates() {
+  // No leading \b on any of these. Inline markup runs the value into its
+  // caption — "1,750,420steps" — and a boundary between "0" and "s" does not
+  // exist, so requiring one finds nothing at all. The trailing boundary stays,
+  // which is what keeps "steps" from matching inside "steppers".
+  const LABELS = [
+    ['participants', /(participants?|steppers?|walkers?|members?|people)\b/i],
+    ['teams', /teams?\b/i],
+    ['steps', /steps?\b/i],
+    ['raised', /(raised|donations?|fundraised)\b/i],
+  ];
+
+  const found = {};
+
+  for (const element of document.querySelectorAll('*')) {
+    const text = (element.innerText || '').replace(/\s+/g, ' ').trim();
+    // Short enough to be a stat block rather than a section of the page.
+    if (!text || text.length > 60) continue;
+
+    const money = text.match(/\$\s*([\d,]+(?:\.\d+)?)/g);
+    const bare = text.match(/(?<![\d,.$])(?:\d{1,3}(?:,\d{3})+|\d+)(?![\d,.])/g);
+    const tokens = (money?.length ?? 0) + (bare?.length ?? 0);
+
+    // Exactly one number, or this is a container rather than a stat block. The
+    // wrapper around four stats reads "1,750,420steps$12,480raised191participants
+    // 52teams", carries every label at once, and would hand its first number to
+    // all of them.
+    if (tokens !== 1) continue;
+
+    for (const [key, pattern] of LABELS) {
+      if (!pattern.test(text)) continue;
+      // "Raised" is the only one written as currency; the rest are counts.
+      const raw =
+        key === 'raised'
+          ? money?.[0]?.replace(/[$\s]/g, '')
+          : bare?.[0];
+      if (!raw) continue;
+      const value = Number(raw.replace(/,/g, ''));
+      if (!Number.isFinite(value) || value <= 0) continue;
+      // The largest wins: an organisation total is bigger than any one row's
+      // figure that happens to sit beside the same word.
+      if (!(key in found) || value > found[key]) found[key] = value;
+    }
+  }
+
+  return found;
 }
 
 /**
@@ -189,7 +343,19 @@ export function placeOurs(rows, entities, measure) {
     .sort((a, b) => b[measure] - a[measure]);
   if (ordered.length === 0) return new Map();
 
+  // On a ladder that doesn't link its rows, a name is all we have to match on,
+  // and the organisation is far bigger than our twelve. Two people called the
+  // same thing would give one of them the other's rank, so count the names
+  // first and decline any that appear twice — a missing placement is a row
+  // that doesn't render, which is much better than a confidently wrong one.
+  const nameCounts = new Map();
+  for (const row of ordered) {
+    const key = normalise(row.name);
+    nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
+  }
+
   const placements = new Map();
+  const ambiguous = [];
   let rank = 0;
   let previousValue = null;
 
@@ -200,7 +366,21 @@ export function placeOurs(rows, entities, measure) {
       previousValue = row[measure];
     }
     const ours = matchRow(row, entities);
-    if (ours) placements.set(ours.id, { rank, of: ordered.length });
+    if (!ours) continue;
+    // A row that carries a slug identified itself; only name-matched rows are
+    // at risk of the collision above.
+    if (!slugFromUrl(row.href) && nameCounts.get(normalise(row.name)) > 1) {
+      ambiguous.push(ours.name);
+      continue;
+    }
+    placements.set(ours.id, { rank, of: ordered.length });
+  }
+
+  if (ambiguous.length > 0) {
+    console.warn(
+      `  ! skipped ${ambiguous.length} ${measure} placement(s) — more than one row on this ` +
+        `ladder carries that name, so the rank could belong to someone else: ${ambiguous.join(', ')}`,
+    );
   }
 
   return placements;
@@ -217,6 +397,42 @@ export function byEntity(placementsByMeasure) {
     }
   }
   return out;
+}
+
+/**
+ * Discards any "total" that is really one row's figure.
+ *
+ * A ladder row reads "412,880 steps", which looks exactly like an organisation
+ * total sitting beside the word "steps" — and on a page with no stat block that
+ * is what gets picked up. An organisation's total cannot equal, or be smaller
+ * than, a single participant's, so a candidate failing that test is a row and
+ * is dropped. Getting this wrong would not break anything visibly; it would
+ * quietly make every "against the average" figure wrong, which is worse.
+ */
+function sane(candidates, tables) {
+  const rowValues = new Set();
+  // Per measure, because a money total is naturally far smaller than a step
+  // total: comparing $12,480 raised against 412,880 steps would throw away a
+  // perfectly good figure.
+  const biggest = { steps: 0, raised: 0 };
+  for (const rows of tables) {
+    for (const row of rows) {
+      for (const measure of ['steps', 'raised']) {
+        if (Number.isFinite(row[measure])) {
+          rowValues.add(row[measure]);
+          biggest[measure] = Math.max(biggest[measure], row[measure]);
+        }
+      }
+    }
+  }
+
+  const kept = {};
+  for (const [key, value] of Object.entries(candidates)) {
+    if (rowValues.has(value)) continue;
+    if (key in biggest && value <= biggest[key]) continue;
+    kept[key] = value;
+  }
+  return kept;
 }
 
 /**
@@ -264,6 +480,7 @@ async function readLadder(page, url, teams, members) {
   }));
 
   const tables = await page.evaluate(extractRows);
+  const aggregates = sane(await page.evaluate(extractAggregates), tables);
 
   const teamPlacements = { steps: new Map(), raised: new Map() };
   const memberPlacements = { steps: new Map(), raised: new Map() };
@@ -283,9 +500,31 @@ async function readLadder(page, url, teams, members) {
       teamPlacements.steps.size + teamPlacements.raised.size +
       memberPlacements.steps.size + memberPlacements.raised.size,
     tables,
+    aggregates,
     groups: tables.map((rows) => rows.length),
     shape,
   };
+}
+
+/**
+ * Carries the last known rank forward, so the site can say "up three places".
+ *
+ * `previous` is the rank at the last successful read, whatever that was — not a
+ * running history. One extra number, and it turns a static position into the
+ * thing people actually check.
+ */
+function withMovement(current, before) {
+  const out = {};
+  for (const [id, measures] of Object.entries(current)) {
+    out[id] = {};
+    for (const [measure, placement] of Object.entries(measures)) {
+      const wasRank = before?.[id]?.[measure]?.rank;
+      out[id][measure] = Number.isFinite(wasRank)
+        ? { ...placement, previous: wasRank }
+        : placement;
+    }
+  }
+  return out;
 }
 
 async function main() {
@@ -329,6 +568,7 @@ async function main() {
     let memberPlacements = { steps: new Map(), raised: new Map() };
     let matched = 0;
     let tables = [];
+    let aggregates = {};
 
     for (const url of CANDIDATE_URLS) {
       const attempt = await readLadder(page, url, teams, members);
@@ -338,8 +578,14 @@ async function main() {
         `  ${url.replace(ORIGIN, '')} → ${attempt.shape.links} fundraiser links, ` +
           `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}], ` +
           `matched ${attempt.matched} of ours` +
+          (Object.keys(attempt.aggregates).length
+            ? ` · totals: ${Object.entries(attempt.aggregates).map(([k, v]) => `${k}=${v}`).join(' ')}`
+            : '') +
           (attempt.shape.headings ? ` · headings: ${attempt.shape.headings}` : ''),
       );
+      // Aggregates accumulate across pages — the ladder and the org's own page
+      // each carry some of them — while placements come from the best page.
+      aggregates = { ...attempt.aggregates, ...aggregates };
       if (attempt.matched > matched) {
         ({ teamPlacements, memberPlacements, matched, tables } = attempt);
       }
@@ -354,11 +600,13 @@ async function main() {
       );
     }
 
+    const before = previous ? JSON.parse(previous) : null;
     const next = {
       updated: new Date().toISOString(),
       scope: ORG,
-      teams: byEntity(teamPlacements),
-      members: byEntity(memberPlacements),
+      org: { name: ORG.toUpperCase(), ...aggregates },
+      teams: withMovement(byEntity(teamPlacements), before?.teams),
+      members: withMovement(byEntity(memberPlacements), before?.members),
     };
     const serialised = `${JSON.stringify(next, null, 2)}\n`;
 
