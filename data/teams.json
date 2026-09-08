@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-08T02:12:18.389Z",
+    "lastUpdated": "2026-09-08T04:12:52.064Z",
     "dataSource": "live"
   },
   "teams": [
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 147971,
+          "steps": 148817,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
@@ -165,7 +165,7 @@
           "name": "Emma Coggin",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
-          "steps": 90297,
+          "steps": 104884,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
