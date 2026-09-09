@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-08T22:12:22.097Z",
+    "lastUpdated": "2026-09-09T00:20:15.508Z",
     "dataSource": "live"
   },
   "teams": [
@@ -88,7 +88,7 @@
           "name": "Dionne Marks",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/dionnemarks",
-          "steps": 148907,
+          "steps": 157054,
           "stepTarget": 390000,
           "raised": 276,
           "fundraisingGoal": 350,
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 148817,
+          "steps": 156202,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
