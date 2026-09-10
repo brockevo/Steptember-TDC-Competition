@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-10T04:12:25.131Z",
+    "lastUpdated": "2026-09-10T06:16:49.518Z",
     "dataSource": "live"
   },
   "teams": [
@@ -14,7 +14,7 @@
       "name": "Walkoholics",
       "colour": 1,
       "url": "https://www.steptember.org.au/fundraisers/walkoholics",
-      "raised": 0,
+      "raised": 107,
       "goal": 2000,
       "members": [
         {
@@ -24,7 +24,7 @@
           "url": "https://www.steptember.org.au/fundraisers/AnnaHaynes",
           "steps": 128843,
           "stepTarget": 300000,
-          "raised": 0,
+          "raised": 107,
           "fundraisingGoal": 500,
           "photo": null
         },
@@ -165,7 +165,7 @@
           "name": "Emma Coggin",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
-          "steps": 119279,
+          "steps": 127984,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
