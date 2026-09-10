@@ -112,7 +112,20 @@ export function matchRow(row, entities) {
  * those groups the way it would have used separate tables, so the team ladder
  * and the participant ladder keep their own field sizes.
  */
-export function extractRows() {
+export function extractRows(known = []) {
+  /**
+   * Our own roster, normalised. The page cannot tell us which repeated
+   * structure is the ladder, but we know exactly who we are looking for: a set
+   * of rows containing "Dionne Marks" is the stepper ladder, and no shape
+   * heuristic beats that. Same normalisation as `matchRow` uses, restated here
+   * because this function is serialised into the browser and closes over
+   * nothing.
+   */
+  const knownNames = new Set(
+    known.map((name) => String(name).toLowerCase().replace(/[^a-z0-9]/g, '')),
+  );
+  const asKey = (name) => String(name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
   const money = (text) => {
     const match = text.match(/\$\s*([\d,]+(?:\.\d+)?)/);
     return match ? Number(match[1].replace(/,/g, '')) : null;
@@ -211,12 +224,28 @@ export function extractRows() {
    */
   function rowsWithin(block) {
     let best = [];
+    let bestScore = -1;
+
     const consider = (parent) => {
       const children = [...parent.children];
       if (children.length < 3) return;
       const rows = children.map(readRow).filter(Boolean);
       // Most of the siblings must look like rows, or this is not a ladder.
-      if (rows.length >= 3 && rows.length >= children.length - 1) best = rows;
+      if (rows.length < 3 || rows.length < children.length - 1) return;
+
+      // Scored, not last-one-wins. The previous version assigned `best` on
+      // every qualifying set while walking descendants depth-first, so the
+      // deepest match won by arriving last. On the live board each row carries
+      // its own little strip of figures, and that strip qualifies — so the real
+      // ladder was being read, then thrown away for three cells named "avg".
+      // Nothing matched, forty pages were walked for nothing, and the log
+      // looked healthy throughout.
+      const hits = rows.filter((row) => knownNames.has(asKey(row.name))).length;
+      const score = hits > 0 ? 1e6 + hits * 1000 + rows.length : rows.length;
+      if (score > bestScore) {
+        bestScore = score;
+        best = rows;
+      }
     };
 
     consider(block);
@@ -484,7 +513,7 @@ const rowKey = (row) => `${normalise(row.name)}|${row.steps}|${row.raised}`;
  * only as good as the field it came from, so an incomplete walk must not be
  * mistaken for a complete one.
  */
-async function readAllPages(page) {
+async function readAllPages(page, known) {
   const NEXT = /^(next|more|show more|load more|view more|see more|›|»|→)\s*(page)?$/i;
   /** 191 participants at five a page is 39; the cap is slack, not a target. */
   const MAX_PAGES = 80;
@@ -495,7 +524,7 @@ async function readAllPages(page) {
   let exhausted = true;
 
   for (let round = 0; round < MAX_PAGES; round += 1) {
-    const groups = await page.evaluate(extractRows);
+    const groups = await page.evaluate(extractRows, known);
 
     let added = 0;
     groups.forEach((rows, index) => {
@@ -551,6 +580,7 @@ async function readAllPages(page) {
  * against links that were present but hidden.
  */
 async function readLadder(page, url, teams, members) {
+  const known = [...teams, ...members].map((entity) => entity.name);
   const empty = { steps: new Map(), raised: new Map() };
   const nothing = {
     teamPlacements: empty,
@@ -588,7 +618,7 @@ async function readLadder(page, url, teams, members) {
       .join(' / '),
   }));
 
-  const walk = await readAllPages(page);
+  const walk = await readAllPages(page, known);
   const tables = walk.ladders;
   const aggregates = sane(await page.evaluate(extractAggregates), tables);
 
@@ -729,13 +759,43 @@ async function main() {
       delete aggregates.teams;
     }
 
+    // Every one of ours, named, with the rank computed for them. These are our
+    // own names — already public on the site — so this reveals nothing, and it
+    // is the only way to tell a good parse from a plausible-looking bad one.
+    // Four of these are known independently (Dionne Marks 16, chloe egle 20,
+    // Finding Our Footing 7, Escalated to the Stepping Committee 10); if the
+    // run disagrees with those, the parse is wrong however healthy it looks.
+    const report = (label, entities, placements) => {
+      const lines = entities.map((entity) => {
+        const place = placements[entity.id];
+        if (!place) return `${entity.name} —`;
+        const parts = [];
+        if (place.steps) parts.push(`${place.steps.rank}/${place.steps.of} steps`);
+        if (place.raised) parts.push(`${place.raised.rank}/${place.raised.of} raised`);
+        return `${entity.name} ${parts.join(', ')}`;
+      });
+      const missing = entities.filter((entity) => !placements[entity.id]).length;
+      console.log(`${label} (${entities.length - missing}/${entities.length} placed): ${lines.join(' · ')}`);
+      return missing;
+    };
+
+    const teamRows = byEntity(teamPlacements);
+    const memberRows = byEntity(memberPlacements);
+    const unplaced = report('Teams', teams, teamRows) + report('Members', members, memberRows);
+    if (unplaced > 0) {
+      console.warn(
+        `  ! ${unplaced} of ours have no placement. Either the field is incomplete or a name did ` +
+          `not match — worth chasing rather than shipping a partial board.`,
+      );
+    }
+
     const before = previous ? JSON.parse(previous) : null;
     const next = {
       updated: new Date().toISOString(),
       scope: ORG,
       org: { name: ORG.toUpperCase(), ...aggregates },
-      teams: withMovement(byEntity(teamPlacements), before?.teams),
-      members: withMovement(byEntity(memberPlacements), before?.members),
+      teams: withMovement(teamRows, before?.teams),
+      members: withMovement(memberRows, before?.members),
     };
     const serialised = `${JSON.stringify(next, null, 2)}\n`;
 
