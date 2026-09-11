@@ -1,6 +1,37 @@
 {
-  "updated": null,
+  "updated": "2026-09-11T00:34:33.548Z",
   "scope": "kpmg",
-  "teams": {},
+  "org": {
+    "name": "KPMG",
+    "raised": 13002
+  },
+  "teams": {
+    "findingourfooting": {
+      "steps": {
+        "rank": 505,
+        "of": 1500
+      },
+      "raised": {
+        "rank": 1873,
+        "of": 6000
+      }
+    },
+    "escalatedtothesteppingcommittee": {
+      "steps": {
+        "rank": 733,
+        "of": 1500
+      }
+    },
+    "walkoholics": {
+      "steps": {
+        "rank": 854,
+        "of": 1500
+      },
+      "raised": {
+        "rank": 5195,
+        "of": 6000
+      }
+    }
+  },
   "members": {}
 }
