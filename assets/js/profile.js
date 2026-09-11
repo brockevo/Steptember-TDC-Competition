@@ -12,7 +12,8 @@
 
 import { avatar } from './ui.js';
 import { chartBlock } from './chart.js';
-import { fundraisingLane, kpi, memberStats, orgPlacements, targetLane } from './stats.js';
+import { fundraisingLane, kpi, memberStats, targetLane } from './stats.js';
+import { panelFor, scopesFor, switcher, initSwitcher } from './scope.js';
 import { escapeHtml, formatNumber, ordinal, plural } from './format.js';
 
 const KEY = 'steptember:me';
@@ -183,9 +184,12 @@ function renderComparison(member, baseline, clock) {
 /* ------------------------------------------------------------- the profile -- */
 
 /**
- * Where this person sits: within the twelve of us always, and across the whole
- * organisation once its leaderboard has been read. The organisation rows are
- * absent rather than blank whenever that scrape hasn't run.
+ * Where this person sits among the twelve of us.
+ *
+ * This is the "This challenge" scope only — the organisation standing lives
+ * behind the switcher's second chip, so the two fields are never mixed into one
+ * grid where a rank of 16 and a rank of 2 would sit side by side meaning
+ * different things.
  */
 function renderPlacements(member, data) {
   const rows = [
@@ -193,8 +197,6 @@ function renderPlacements(member, data) {
     kpi('Steps, in your team', ordinal(member.teamStepRank), `of ${member.teamSize} in ${member.teamName}`),
     kpi('Fundraising, everyone here', ordinal(member.overallMoneyRank), `of ${data.members.length} steppers`),
   ];
-
-  rows.push(...orgPlacements(member.placements));
 
   return `<section class="placements">
     <h3>Where you sit</h3>
@@ -220,9 +222,17 @@ function renderDashboard(member, data) {
 
     ${renderComparison(member, baseline, clock)}
 
-    <dl class="kpis">${memberStats(member, data).join('')}</dl>
+    ${switcher(scopesFor(member))}
 
-    ${renderPlacements(member, data)}
+    <div data-scope-panel="challenge">
+      <dl class="kpis">${memberStats(member, data).join('')}</dl>
+      ${renderPlacements(member, data)}
+    </div>
+    ${
+      scopesFor(member).some((scope) => scope.id === 'org')
+        ? `<div data-scope-panel="org" hidden>${panelFor('org', member, 'member')}</div>`
+        : ''
+    }
 
     ${chartBlock({
       title: 'Your cumulative steps',
@@ -317,6 +327,7 @@ export function initProfileView(data) {
     if (title) title.textContent = 'Your September';
     if (lead) lead.textContent = 'How your own month is going, and how it compares to the way you usually walk.';
     host.innerHTML = renderDashboard(member, data);
+    initSwitcher(host);
   }
 
   host.addEventListener('click', (event) => {

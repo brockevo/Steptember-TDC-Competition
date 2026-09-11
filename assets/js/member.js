@@ -7,7 +7,8 @@
 
 import { avatar } from './ui.js';
 import { chartBlock } from './chart.js';
-import { fundraisingLane, memberStats, orgPlacements, targetLane } from './stats.js';
+import { fundraisingLane, memberStats, targetLane } from './stats.js';
+import { panelFor, scopesFor, switcher, initSwitcher } from './scope.js';
 import { escapeHtml, formatNumber } from './format.js';
 
 const HASH_PREFIX = '#member/';
@@ -44,7 +45,10 @@ function dailyChart(deltas) {
 
 function buildProfile(member, data) {
   const { competition, clock } = data;
-  const stats = [...memberStats(member, data), ...orgPlacements(member.placements)];
+  // The organisation rows move behind the switcher rather than sitting in the
+  // main grid, so "This challenge" shows exactly what it always did.
+  const stats = memberStats(member, data);
+  const scopes = scopesFor(member);
 
   const deltas = data.history.deltasFor(member.id);
 
@@ -62,7 +66,17 @@ function buildProfile(member, data) {
       <button type="button" class="close" data-close aria-label="Close profile">&times;</button>
     </div>
 
-    <dl class="kpis">${stats.join('')}</dl>
+    ${switcher(scopes)}
+
+    <div data-scope-panel="challenge">
+      <dl class="kpis">${stats.join('')}</dl>
+    </div>
+    ${
+      scopes.some((scope) => scope.id === 'org')
+        ? `<div data-scope-panel="org" hidden>${panelFor('org', member, 'member')}</div>`
+        : ''
+    }
+
     ${chartBlock({
       title: 'Cumulative steps',
       values: member.cumulative,
@@ -103,6 +117,7 @@ export function initProfiles(data) {
     body.style.setProperty('--accent', `var(--team-${member.teamColour})`);
     body.style.setProperty('--lane', `var(--lane-${member.teamColour})`);
     body.innerHTML = buildProfile(member, data);
+    initSwitcher(body);
     if (!dialog.open) dialog.showModal();
     if (!fromHash) history.replaceState(null, '', `${HASH_PREFIX}${memberId}`);
     dialog.querySelector('[data-close]')?.focus();

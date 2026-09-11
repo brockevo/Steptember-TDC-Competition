@@ -7,6 +7,7 @@ import { chartBlock, initChartTooltips } from './chart.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
 import { initProfileView } from './profile.js';
+import { initTeams } from './team.js';
 import { ORG_NAME } from './stats.js';
 import { podium } from './podium.js';
 import {
@@ -270,7 +271,10 @@ function renderTeams(data) {
         : '<span class="badge">Fundraising not started</span>';
 
       return `<article class="team" style="${accentFor(team.colour)}">
-        <div class="team-top">${avatar(team, 'is-team')}<h3>${escapeHtml(team.name)}</h3></div>
+        <button type="button" class="team-top" data-team-id="${escapeHtml(team.id)}"
+                aria-label="${escapeHtml(`Open ${team.name}`)}">
+          ${avatar(team, 'is-team')}<h3>${escapeHtml(team.name)}</h3>
+        </button>
         <div class="badges">
           ${stepBadge}${moneyBadge}
           <span class="badge">${team.memberCount} ${plural(team.memberCount, 'member')}</span>
@@ -524,6 +528,7 @@ async function start() {
 
     renderFooter(data);
     initProfiles(data);
+    initTeams(data);
     initRouter();
     initTabbarAutoHide();
     initChartTooltips();

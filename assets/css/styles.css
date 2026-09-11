@@ -1860,3 +1860,107 @@ footer.site ul {
   letter-spacing: 0.09em;
   color: var(--accent);
 }
+
+/* ------------------------------------------------------- scope switcher --- */
+
+/* The chips split the row evenly and run the full width of the panel, so they
+   line up with the stat grid beneath rather than trailing off mid-row. Equal
+   columns rather than `flex: 1`, so the two stay the same width whatever their
+   labels say — a wider chip would read as the more important scope. */
+.scopes {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.scope {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline-strong);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  text-align: center;
+}
+
+.scope:hover {
+  border-color: var(--accent, var(--brand));
+}
+
+.scope.is-active {
+  background: var(--accent, var(--brand));
+  border-color: transparent;
+  color: #fff;
+}
+
+/* ------------------------------------------------------------- the meter --- */
+
+/* Where one entity sits in its whole field: the track is everyone, the fill is
+   everyone ahead, the marker is you. A single ratio against a limit, so a meter
+   rather than a chart. The mark sits below 3:1 against the track, which the
+   palette validator flags as needing relief — the rank is always written out in
+   the block beneath, so position is never carried by colour alone. */
+.meter {
+  margin: 0 0 18px;
+}
+
+.meter-track {
+  position: relative;
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--lane-track);
+}
+
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-pill);
+}
+
+/* The 2px surface ring the mark specs call for, so the marker stays legible
+   where it meets the fill it sits on top of. */
+.meter-mark {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.meter-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* A team card's heading is now the control that opens its dialog. */
+.team-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.team-top:hover h3 {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
