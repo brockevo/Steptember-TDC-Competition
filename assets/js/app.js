@@ -4,6 +4,7 @@ import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
 import { accentFor, avatar, handleBrokenAvatars, initTabbarAutoHide, laneFor } from './ui.js';
 import { chartBlock, initChartTooltips } from './chart.js';
+import { initChartDecks } from './deck.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
 import { initProfileView } from './profile.js';
@@ -308,6 +309,7 @@ function renderTeams(data) {
           totalDays: data.clock.totalDays,
           target: team.stepTarget,
           colour: `var(--team-${team.colour})`,
+          subject: team.name,
           label: `${team.name} cumulative steps through September, currently ${formatNumber(team.steps)} against a combined target of ${formatNumber(team.stepTarget)}`,
           note: `Dashed line is the pace to their combined ${formatNumber(team.stepTarget)} step target.`,
         })}
@@ -369,6 +371,7 @@ function renderOverallChart(data) {
       totalDays: clock.totalDays,
       target: totals.stepTarget,
       colour: 'var(--brand)',
+      subject: `all ${totals.memberCount} steppers`,
       label: `Combined cumulative steps for all ${totals.memberCount} participants through September, currently ${formatNumber(totals.steps)} against a combined target of ${formatNumber(totals.stepTarget)}`,
       note: `Dashed line is the pace to everyone's combined ${formatNumber(totals.stepTarget)} step target.`,
       wide: true,
@@ -532,6 +535,7 @@ async function start() {
     initRouter();
     initTabbarAutoHide();
     initChartTooltips();
+    initChartDecks();
   } catch (error) {
     console.error(error);
     const banner = document.getElementById('load-error');

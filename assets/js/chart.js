@@ -94,6 +94,170 @@ export function cumulativeChart({
   </svg>`;
 }
 
+/* ------------------------------------------------- the projected finish -- */
+
+/**
+ * What the end-of-September total looked like it would be, as of each day.
+ *
+ * The same pace arithmetic the stats and the tooltip already use — running
+ * total over days elapsed, carried to the end of the month — read one day at a
+ * time. A big day pushes the forecast up, a rest day drags it down, so the line
+ * rises and falls the way a price does rather than only ever climbing.
+ */
+export function projectionSeries(values, totalDays) {
+  return (values ?? [])
+    .filter((value) => Number.isFinite(value))
+    .map((total, index) => (total / (index + 1)) * totalDays);
+}
+
+/** "11 Sep" from an ISO date, falling back to the day's position in September. */
+function shortDate(iso, dayIndex) {
+  const date = iso ? new Date(`${iso}T00:00:00`) : null;
+  if (!date || Number.isNaN(date.getTime())) return `${dayIndex + 1} Sep`;
+  return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+}
+
+/** Short money-less figures for the value axis: 538,732 -> "539k". */
+function compact(value) {
+  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}m`;
+  if (Math.abs(value) >= 10_000) return `${Math.round(value / 1000)}k`;
+  if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
+/**
+ * The projected finish over time.
+ *
+ * Deliberately a different chart from the cumulative one, not the same chart
+ * with different numbers:
+ *
+ * - **The value axis does not start at zero.** A forecast that moves a few per
+ *   cent a day would be a flat line against a zero baseline, which would hide
+ *   the entire subject. Both ends of the scale are printed so the crop is
+ *   stated rather than smuggled.
+ * - **No area fill.** Filling down to an axis that isn't zero would shade a
+ *   quantity that means nothing.
+ * - **The target is a horizontal line**, because a projection either clears it
+ *   or it doesn't. It is only drawn when it falls inside the range on show —
+ *   forcing a distant target into the scale would flatten the series to hide
+ *   it, so the note carries the figure instead.
+ */
+export function projectionChart({
+  values,
+  dates,
+  totalDays,
+  target,
+  colour,
+  label,
+  width = 340,
+  height = 150,
+}) {
+  const points = projectionSeries(values, totalDays);
+  if (points.length === 0) {
+    return `<p class="chart-empty">No day-by-day figures yet — the forecast appears once steps are logged.</p>`;
+  }
+
+  // Room on the left for the value labels this chart needs and the cumulative
+  // one doesn't.
+  const pad = { top: 12, right: 10, bottom: 20, left: width > 500 ? 46 : 34 };
+  const plotWidth = width - pad.left - pad.right;
+  const plotHeight = height - pad.top - pad.bottom;
+
+  const low = Math.min(...points);
+  const high = Math.max(...points);
+  // A flat series would otherwise divide by zero; give it a band to sit in.
+  const span = high - low || Math.max(high * 0.1, 1);
+  const floor = Math.max(0, low - span * 0.18);
+  const ceiling = high + span * 0.18;
+  const range = ceiling - floor || 1;
+
+  // Unlike the cumulative chart, this one spans only the days that have a
+  // reading. There is no forecast for a day that hasn't happened, so holding
+  // the axis open to the 30th would spend two thirds of the width on nothing
+  // and squeeze the line — on a phone, into an unreadable corner.
+  const lastDay = Math.max(points.length - 1, 1);
+  const x = (dayIndex) => pad.left + (dayIndex / lastDay) * plotWidth;
+  const y = (value) => pad.top + plotHeight - ((value - floor) / range) * plotHeight;
+
+  const line = points.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ');
+  const latest = points.at(-1);
+
+  // Only when it would actually land on the chart.
+  const targetInView = target && target >= floor && target <= ceiling;
+  const targetLine = targetInView
+    ? `<line x1="${pad.left}" y1="${y(target).toFixed(1)}" x2="${width - pad.right}" y2="${y(target).toFixed(1)}"
+             stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" class="chart-pace" />
+       <text x="${width - pad.right}" y="${(y(target) - 4).toFixed(1)}" text-anchor="end"
+             class="chart-tick">target ${compact(target)}</text>`
+    : '';
+
+  // Dates rather than day numbers, because this axis stops at the last reading
+  // rather than at the 30th — "11 Sep" at the right edge says so, where a bare
+  // tick could be mistaken for the end of the month.
+  const ticks = [...new Set([0, Math.floor(lastDay / 2), lastDay])]
+    .map((dayIndex) => {
+      const anchor = dayIndex === 0 ? 'start' : dayIndex === lastDay ? 'end' : 'middle';
+      return `<text x="${x(dayIndex).toFixed(1)}" y="${height - 6}" text-anchor="${anchor}"
+                    class="chart-tick">${escapeHtml(shortDate(dates?.[dayIndex], dayIndex))}</text>`;
+    })
+    .join('');
+
+  // Both ends of the cropped scale, so nobody reads the bottom as zero.
+  const scale = [
+    [ceiling, pad.top + 4],
+    [floor, pad.top + plotHeight],
+  ]
+    .map(
+      ([value, at]) =>
+        `<text x="${pad.left - 6}" y="${at.toFixed(1)}" text-anchor="end"
+               class="chart-tick">${compact(value)}</text>`,
+    )
+    .join('');
+
+  return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img"
+               style="aspect-ratio: ${width} / ${height}"
+               aria-label="${escapeHtml(label)}">
+    <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + plotHeight}"
+          class="chart-axis" stroke-width="1" />
+    <line x1="${pad.left}" y1="${pad.top + plotHeight}" x2="${width - pad.right}" y2="${pad.top + plotHeight}"
+          class="chart-axis" stroke-width="1" />
+    ${targetLine}
+    ${scale}
+
+    <polyline points="${line}" fill="none" stroke="${colour}" stroke-width="2.5"
+              stroke-linejoin="round" stroke-linecap="round" />
+    <circle cx="${x(points.length - 1).toFixed(1)}" cy="${y(latest).toFixed(1)}" r="4"
+            fill="${colour}" stroke="var(--surface)" stroke-width="2" />
+    ${ticks}
+
+    <g class="chart-hits">${projectionBands({ points, dates, totalDays, x, y, height })}</g>
+    <circle class="chart-cursor" r="5" fill="${colour}" stroke="var(--surface)"
+            stroke-width="2" opacity="0" />
+  </svg>`;
+}
+
+/** Hit bands for the forecast line — the same lookup idea, different figures. */
+function projectionBands({ points, dates, totalDays, x, y, height }) {
+  const slot = (x(1) - x(0)) || 8;
+
+  return points
+    .map((projection, index) => {
+      const before = index > 0 ? points[index - 1] : null;
+      const shift = before ? ((projection - before) / before) * 100 : null;
+
+      return `<rect x="${(x(index) - slot / 2).toFixed(1)}" y="0"
+                    width="${slot.toFixed(1)}" height="${height}"
+                    fill="transparent" data-kind="projection"
+                    data-date="${escapeHtml(dates?.[index] ?? '')}"
+                    data-projection="${Math.round(projection)}"
+                    data-moved="${before === null ? '' : Math.round(projection - before)}"
+                    data-shift="${shift === null ? '' : shift.toFixed(1)}"
+                    data-cx="${x(index).toFixed(1)}"
+                    data-cy="${y(projection).toFixed(1)}" />`;
+    })
+    .join('');
+}
+
 /**
  * One transparent full-height band per day with data, carrying that day's
  * figures so the tooltip is a lookup rather than a re-derivation.
@@ -131,7 +295,30 @@ function hitBands({ points, dates, totalDays, x, y, height }) {
     .join('');
 }
 
-/** The chart plus its heading and latest figure, as one card body. */
+/** One chart card: heading, latest figure, the plot, its tooltip and note. */
+function panel({ title, latest, svg, note, wide }) {
+  return `<div class="chart-block${wide ? ' wide' : ''}">
+    <div class="chart-head">
+      <span class="chart-title">${escapeHtml(title)}</span>
+      <strong class="chart-latest">${formatNumber(latest)}</strong>
+    </div>
+    ${svg}
+    <div class="chart-tip" hidden></div>
+    ${note ? `<p class="chart-note">${escapeHtml(note)}</p>` : ''}
+  </div>`;
+}
+
+/**
+ * The chart card — as a deck of two: what has happened, and where it is
+ * heading.
+ *
+ * Both are built from the one `values` series, so every place a chart already
+ * appears gains the forecast without its caller assembling a second set of
+ * figures. Where there is nothing to forecast from, the deck collapses to the
+ * single cumulative card it has always been.
+ *
+ * @param subject  who or what the line is about, for the forecast's label
+ */
 export function chartBlock({
   title,
   values,
@@ -141,21 +328,61 @@ export function chartBlock({
   colour,
   label,
   note,
+  subject,
   wide = false,
 }) {
-  const latest = (values ?? []).at(-1) ?? 0;
+  const points = (values ?? []).filter((value) => Number.isFinite(value));
   // A wider viewBox for the full-page chart: at the same 340x150 ratio a
   // 1200px-wide card would be over 500px tall. 3:1 keeps it a sensible height
   // on a desktop without flattening to a sliver on a phone.
   const size = wide ? { width: 900, height: 300 } : {};
-  return `<div class="chart-block${wide ? ' wide' : ''}">
-    <div class="chart-head">
-      <span class="chart-title">${escapeHtml(title)}</span>
-      <strong class="chart-latest">${formatNumber(latest)}</strong>
+
+  const cumulative = panel({
+    title,
+    latest: points.at(-1) ?? 0,
+    svg: cumulativeChart({ values, dates, totalDays, target, colour, label, ...size }),
+    note,
+    wide,
+  });
+
+  // One reading is a dot, not a trend, and the forecast from a single day is
+  // just that day times thirty. Below two days there is nothing to show.
+  if (points.length < 2) return `<div class="chart-deck is-single">${cumulative}</div>`;
+
+  const forecast = projectionSeries(values, totalDays);
+  const finish = forecast.at(-1);
+
+  // The swing across the whole line, rather than a comparison against the first
+  // day: a forecast made from one day's steps is that day times thirty, which
+  // is the noisiest reading in the series and the worst thing to anchor to.
+  const low = Math.min(...forecast);
+  const high = Math.max(...forecast);
+
+  const projected = panel({
+    title: 'Projected finish',
+    latest: finish,
+    svg: projectionChart({ values, dates, totalDays, target, colour, ...size,
+      label: `Projected end-of-September total for ${subject ?? 'this line'} as it stood on each day, now ${formatNumber(finish)}`,
+    }),
+    note: `Where 30 September was heading, read fresh each day — between ${formatNumber(low)} and ${formatNumber(high)} so far.${
+      target ? ` Target is ${formatNumber(target)}.` : ''
+    }`,
+    wide,
+  });
+
+  return `<div class="chart-deck" data-deck>
+    <div class="deck-viewport">
+      <div class="deck-track" data-deck-track>
+        <div class="deck-slide" data-deck-slide="0">${cumulative}</div>
+        <div class="deck-slide" data-deck-slide="1" aria-hidden="true">${projected}</div>
+      </div>
     </div>
-    ${cumulativeChart({ values, dates, totalDays, target, colour, label, ...size })}
-    <div class="chart-tip" hidden></div>
-    ${note ? `<p class="chart-note">${escapeHtml(note)}</p>` : ''}
+    <div class="deck-nav" role="tablist" aria-label="Which view of this line to show">
+      <button type="button" class="deck-tab is-active" role="tab"
+              aria-selected="true" tabindex="0" data-deck-to="0">So far</button>
+      <button type="button" class="deck-tab" role="tab"
+              aria-selected="false" tabindex="-1" data-deck-to="1">Projected finish</button>
+    </div>
   </div>`;
 }
 
@@ -178,20 +405,37 @@ export function initChartTooltips() {
     const tip = block?.querySelector('.chart-tip');
     if (!tip || !svg) return;
 
-    const { date, steps, added, projection, shift } = band.dataset;
+    const { kind, date, steps, added, projection, moved, shift } = band.dataset;
     const when = date
       ? new Date(`${date}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
       : '';
 
-    const rise = added ? ` · <span class="tip-up">+${added}%</span> on the total` : '';
-    const forecast = shift
-      ? `Projected finish ${Number(shift) >= 0 ? 'up' : 'down'} <strong>${Math.abs(Number(shift)).toFixed(1)}%</strong> to ${formatNumber(projection)}`
-      : `First day — no earlier projection to compare`;
+    if (kind === 'projection') {
+      // The forecast chart's subject is the forecast itself, so it leads with
+      // the figure and says what moved it, rather than the other way round.
+      const change = shift
+        ? `<span class="${Number(shift) >= 0 ? 'tip-up' : 'tip-down'}">${
+            Number(shift) >= 0 ? '+' : '−'
+          }${Math.abs(Number(shift)).toFixed(1)}%</span> · ${Number(moved) >= 0 ? '+' : '−'}${formatNumber(
+            Math.abs(Number(moved)),
+          )} steps on the day before`
+        : 'First day — no earlier forecast to compare';
 
-    tip.innerHTML = `<span class="tip-day">${escapeHtml(when)}</span>
-      <span><strong>${formatNumber(steps)}</strong> steps${rise}</span>
-      <span class="tip-forecast">${forecast}</span>`;
-    tip.hidden = false;
+      tip.innerHTML = `<span class="tip-day">${escapeHtml(when)}</span>
+        <span>Heading for <strong>${formatNumber(projection)}</strong></span>
+        <span class="tip-forecast">${change}</span>`;
+      tip.hidden = false;
+    } else {
+      const rise = added ? ` · <span class="tip-up">+${added}%</span> on the total` : '';
+      const forecast = shift
+        ? `Projected finish ${Number(shift) >= 0 ? 'up' : 'down'} <strong>${Math.abs(Number(shift)).toFixed(1)}%</strong> to ${formatNumber(projection)}`
+        : `First day — no earlier projection to compare`;
+
+      tip.innerHTML = `<span class="tip-day">${escapeHtml(when)}</span>
+        <span><strong>${formatNumber(steps)}</strong> steps${rise}</span>
+        <span class="tip-forecast">${forecast}</span>`;
+      tip.hidden = false;
+    }
 
     // The band's coordinates are in viewBox units. Scale them to the rendered
     // size, then shift by where the chart sits inside the card — the tooltip is

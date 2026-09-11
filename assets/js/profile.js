@@ -241,6 +241,7 @@ function renderDashboard(member, data) {
       totalDays: clock.totalDays,
       target: member.stepTarget,
       colour: `var(--team-${member.teamColour})`,
+      subject: 'you',
       label: `${member.name}'s cumulative steps through September, currently ${formatNumber(member.steps)}`,
       note: member.stepTarget
         ? `Dashed line is the pace to your ${formatNumber(member.stepTarget)} step target.`
