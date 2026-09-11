@@ -151,6 +151,59 @@ export function extractRows(known = []) {
   const MAX_ROW_TEXT = 400;
   const MAX_CLIMB = 6;
 
+  /* ---- first pass: the board's own markup ------------------------------- */
+
+  // Steptember builds every leaderboard the same way, and says so in its class
+  // names. Six attempts were spent inferring the ladder from shape because I
+  // could not open the page; a look at it shows there is nothing to infer:
+  //
+  //   <div class="leaderboardrow">
+  //     <a>
+  //       <span class="rank">20</span>
+  //       <div class="profilename"><h4><span class="fundraiser-name">chloe egle</span></h4></div>
+  //       <div class="raised">TOTAL STEPS 190672</div>
+  //     </a>
+  //   </div>
+  //
+  // The rank is printed, so it does not have to be derived from a field we
+  // walked — which also means a rank is right even if pagination stops early.
+  const marked = [...document.querySelectorAll('.leaderboardrow')];
+  if (marked.length > 0) {
+    // Two boards sit side by side — fundraising and steps — each in its own
+    // `.leaderboard` container with its own pager. Grouping by container keeps
+    // them apart, so a step rank is never read off the fundraising board.
+    const boards = new Map();
+
+    for (const element of marked) {
+      const name = (element.querySelector('.fundraiser-name')?.innerText ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!name) continue;
+
+      const rankText = (element.querySelector('.rank')?.innerText ?? '').trim();
+      const rank = /^\d{1,5}$/.test(rankText) ? Number(rankText) : null;
+
+      const figure = (element.querySelector('.raised')?.innerText ?? element.innerText ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      // The caption says which board this is; the dollar sign confirms it.
+      const isMoney = /\$/.test(figure) || /fundrais/i.test(figure);
+
+      const board = element.closest('.leaderboard') ?? element.parentElement;
+      if (!boards.has(board)) boards.set(board, []);
+      boards.get(board).push({
+        name,
+        href: element.querySelector('a[href]')?.getAttribute('href') ?? '',
+        rank,
+        steps: isMoney ? null : steps(figure),
+        raised: isMoney ? money(figure) : null,
+      });
+    }
+
+    const found = [...boards.values()].filter((rows) => rows.length > 0);
+    if (found.length > 0) return found;
+  }
+
   const groups = new Map();
 
   for (const link of document.querySelectorAll('a[href*="/fundraisers/"]')) {
@@ -416,6 +469,15 @@ export function placeOurs(rows, entities, measure) {
     nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
   }
 
+  // The board prints each row's position. Where it does, that is the answer —
+  // it is the organisation's own ranking, and it stays correct even if the
+  // walk stopped short of the last page. Deriving it from the rows we happened
+  // to collect would silently renumber everyone in that case.
+  const printed = ordered.every((row) => Number.isFinite(row.rank));
+  const of = printed
+    ? Math.max(...ordered.map((row) => row.rank))
+    : ordered.length;
+
   const placements = new Map();
   const ambiguous = [];
   let rank = 0;
@@ -435,7 +497,7 @@ export function placeOurs(rows, entities, measure) {
       ambiguous.push(ours.name);
       continue;
     }
-    placements.set(ours.id, { rank, of: ordered.length });
+    placements.set(ours.id, { rank: printed ? row.rank : rank, of });
   }
 
   if (ambiguous.length > 0) {
@@ -498,7 +560,7 @@ function sane(candidates, tables) {
 }
 
 /** A ladder's rows are the same row twice if these match. */
-const rowKey = (row) => `${normalise(row.name)}|${row.steps}|${row.raised}`;
+const rowKey = (row) => `${row.rank ?? ''}|${normalise(row.name)}|${row.steps}|${row.raised}`;
 
 /**
  * Reads a ladder across its pages, clicking "next" until it runs out.
@@ -547,16 +609,18 @@ async function readAllPages(page, known) {
       .evaluate((pattern) => {
         const source = new RegExp(pattern.source, pattern.flags);
         const controls = [...document.querySelectorAll('button, a, [role="button"]')];
-        const next = controls.find((control) => {
+        // Every pager, not the first. The page carries two boards side by side
+        // — fundraising and steps — each with its own NEXT, so clicking one
+        // advanced half the page and left the other reading page one forever.
+        const pagers = controls.filter((control) => {
           const label =
             (control.innerText || control.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
           if (!source.test(label)) return false;
           if (control.disabled || control.getAttribute('aria-disabled') === 'true') return false;
           return control.offsetParent !== null;
         });
-        if (!next) return false;
-        next.click();
-        return true;
+        for (const pager of pagers) pager.click();
+        return pagers.length > 0;
       }, { source: NEXT.source, flags: NEXT.flags })
       .catch(() => false);
 
