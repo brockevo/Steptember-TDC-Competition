@@ -51,10 +51,14 @@ const LOGIN_URL = `${ORIGIN}/login/view/org-leaderboard`;
  * run that tries several is worth more than several runs that each try one.
  */
 const CANDIDATE_URLS = [
+  // The signed-in dashboard, and the only page that carries our organisation's
+  // own boards. `/leaderboards-individuals` and `/leaderboards-teams` are the
+  // national ones: a run against those placed our teams 505th, 733rd and 854th
+  // of 1500, which are real numbers for the wrong field. Ranking against all of
+  // Steptember while the page says "Across KPMG" would be worse than showing
+  // nothing, so they are not consulted here.
   `${ORIGIN}/login/view/org-leaderboard`,
   `${ORIGIN}/fundraisers/${ORG}`,
-  `${ORIGIN}/fundraisers/${ORG}/leaderboard`,
-  `${ORIGIN}/organisations/${ORG}`,
 ];
 
 const EMAIL = process.env.STEPTEMBER_EMAIL;
@@ -112,7 +116,24 @@ export function matchRow(row, entities) {
  * those groups the way it would have used separate tables, so the team ladder
  * and the participant ladder keep their own field sizes.
  */
-export function extractRows() {
+export function extractRows(options = []) {
+  // An array is still just the roster, so existing callers keep working; an
+  // object also carries `scope`, a selector confining the read to one board.
+  const { known = [], scope = null } = Array.isArray(options) ? { known: options } : options;
+  const root = (scope ? document.querySelector(scope) : document) ?? document;
+  /**
+   * Our own roster, normalised. The page cannot tell us which repeated
+   * structure is the ladder, but we know exactly who we are looking for: a set
+   * of rows containing "Dionne Marks" is the stepper ladder, and no shape
+   * heuristic beats that. Same normalisation as `matchRow` uses, restated here
+   * because this function is serialised into the browser and closes over
+   * nothing.
+   */
+  const knownNames = new Set(
+    known.map((name) => String(name).toLowerCase().replace(/[^a-z0-9]/g, '')),
+  );
+  const asKey = (name) => String(name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
   const money = (text) => {
     const match = text.match(/\$\s*([\d,]+(?:\.\d+)?)/);
     return match ? Number(match[1].replace(/,/g, '')) : null;
@@ -138,9 +159,62 @@ export function extractRows() {
   const MAX_ROW_TEXT = 400;
   const MAX_CLIMB = 6;
 
+  /* ---- first pass: the board's own markup ------------------------------- */
+
+  // Steptember builds every leaderboard the same way, and says so in its class
+  // names. Six attempts were spent inferring the ladder from shape because I
+  // could not open the page; a look at it shows there is nothing to infer:
+  //
+  //   <div class="leaderboardrow">
+  //     <a>
+  //       <span class="rank">20</span>
+  //       <div class="profilename"><h4><span class="fundraiser-name">chloe egle</span></h4></div>
+  //       <div class="raised">TOTAL STEPS 190672</div>
+  //     </a>
+  //   </div>
+  //
+  // The rank is printed, so it does not have to be derived from a field we
+  // walked — which also means a rank is right even if pagination stops early.
+  const marked = [...root.querySelectorAll('.leaderboardrow')];
+  if (marked.length > 0) {
+    // Two boards sit side by side — fundraising and steps — each in its own
+    // `.leaderboard` container with its own pager. Grouping by container keeps
+    // them apart, so a step rank is never read off the fundraising board.
+    const boards = new Map();
+
+    for (const element of marked) {
+      const name = (element.querySelector('.fundraiser-name')?.innerText ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!name) continue;
+
+      const rankText = (element.querySelector('.rank')?.innerText ?? '').trim();
+      const rank = /^\d{1,5}$/.test(rankText) ? Number(rankText) : null;
+
+      const figure = (element.querySelector('.raised')?.innerText ?? element.innerText ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      // The caption says which board this is; the dollar sign confirms it.
+      const isMoney = /\$/.test(figure) || /fundrais/i.test(figure);
+
+      const board = element.closest('.leaderboard') ?? element.parentElement;
+      if (!boards.has(board)) boards.set(board, []);
+      boards.get(board).push({
+        name,
+        href: element.querySelector('a[href]')?.getAttribute('href') ?? '',
+        rank,
+        steps: isMoney ? null : steps(figure),
+        raised: isMoney ? money(figure) : null,
+      });
+    }
+
+    const found = [...boards.values()].filter((rows) => rows.length > 0);
+    if (found.length > 0) return found;
+  }
+
   const groups = new Map();
 
-  for (const link of document.querySelectorAll('a[href*="/fundraisers/"]')) {
+  for (const link of root.querySelectorAll('a[href*="/fundraisers/"]')) {
     const name = (link.innerText || '').replace(/\s+/g, ' ').trim();
     if (!name) continue;
 
@@ -185,7 +259,7 @@ export function extractRows() {
   const LADDER_HEADING = /top\s+(steppers|fundraisers|teams)/i;
 
   const ladders = [];
-  for (const heading of document.querySelectorAll('h1, h2, h3, h4')) {
+  for (const heading of root.querySelectorAll('h1, h2, h3, h4')) {
     if (!LADDER_HEADING.test(heading.innerText || '')) continue;
 
     // The block after the heading, up to the next heading.
@@ -211,12 +285,28 @@ export function extractRows() {
    */
   function rowsWithin(block) {
     let best = [];
+    let bestScore = -1;
+
     const consider = (parent) => {
       const children = [...parent.children];
       if (children.length < 3) return;
       const rows = children.map(readRow).filter(Boolean);
       // Most of the siblings must look like rows, or this is not a ladder.
-      if (rows.length >= 3 && rows.length >= children.length - 1) best = rows;
+      if (rows.length < 3 || rows.length < children.length - 1) return;
+
+      // Scored, not last-one-wins. The previous version assigned `best` on
+      // every qualifying set while walking descendants depth-first, so the
+      // deepest match won by arriving last. On the live board each row carries
+      // its own little strip of figures, and that strip qualifies — so the real
+      // ladder was being read, then thrown away for three cells named "avg".
+      // Nothing matched, forty pages were walked for nothing, and the log
+      // looked healthy throughout.
+      const hits = rows.filter((row) => knownNames.has(asKey(row.name))).length;
+      const score = hits > 0 ? 1e6 + hits * 1000 + rows.length : rows.length;
+      if (score > bestScore) {
+        bestScore = score;
+        best = rows;
+      }
     };
 
     consider(block);
@@ -387,6 +477,15 @@ export function placeOurs(rows, entities, measure) {
     nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
   }
 
+  // The board prints each row's position. Where it does, that is the answer —
+  // it is the organisation's own ranking, and it stays correct even if the
+  // walk stopped short of the last page. Deriving it from the rows we happened
+  // to collect would silently renumber everyone in that case.
+  const printed = ordered.every((row) => Number.isFinite(row.rank));
+  const of = printed
+    ? Math.max(...ordered.map((row) => row.rank))
+    : ordered.length;
+
   const placements = new Map();
   const ambiguous = [];
   let rank = 0;
@@ -406,7 +505,7 @@ export function placeOurs(rows, entities, measure) {
       ambiguous.push(ours.name);
       continue;
     }
-    placements.set(ours.id, { rank, of: ordered.length });
+    placements.set(ours.id, { rank: printed ? row.rank : rank, of });
   }
 
   if (ambiguous.length > 0) {
@@ -469,7 +568,7 @@ function sane(candidates, tables) {
 }
 
 /** A ladder's rows are the same row twice if these match. */
-const rowKey = (row) => `${normalise(row.name)}|${row.steps}|${row.raised}`;
+const rowKey = (row) => `${row.rank ?? ''}|${normalise(row.name)}|${row.steps}|${row.raised}`;
 
 /**
  * Reads a ladder across its pages, clicking "next" until it runs out.
@@ -484,61 +583,146 @@ const rowKey = (row) => `${normalise(row.name)}|${row.steps}|${row.raised}`;
  * only as good as the field it came from, so an incomplete walk must not be
  * mistaken for a complete one.
  */
-async function readAllPages(page) {
+async function readAllPages(page, known) {
   const NEXT = /^(next|more|show more|load more|view more|see more|›|»|→)\s*(page)?$/i;
-  /** 191 participants at five a page is 39; the cap is slack, not a target. */
-  const MAX_PAGES = 80;
+  /** 209 rows at five a page is 42; the cap is slack, not a target. */
+  const MAX_PAGES = 120;
 
-  const merged = [];
-  const seen = [];
-  let pages = 0;
+  /**
+   * The boards are stacked in the page, one per tab, and only one shows at a
+   * time — event-wide, business, org-teams, org-individuals. Reading
+   * `.leaderboardrow` across the whole document mixed all four together and
+   * clicked "Next" buttons belonging to hidden ones, which is why the walk
+   * stalled at ten rows. So find the innermost panes that hold a board and
+   * treat each as its own thing.
+   *
+   * The pane's own id says what it is — `taborgindsteps`, `taborgteamsteps`,
+   * `tabeventwidesteps` — which is far better than inferring scope from the
+   * numbers, and is how a national rank is told apart from an organisation one.
+   */
+  // Discovered from the tab controls, not from what a pane currently holds. A
+  // board only renders once its tab is opened, so the previous rule — "panes
+  // that already have rows" — could only ever find whichever tab happened to be
+  // showing. INDIVIDUAL is the default in both columns, so the team boards were
+  // filtered out before anything clicked them, and teams came back 0 of 3.
+  // A pane still empty after being opened is genuinely empty; one that was
+  // never opened tells us nothing at all.
+  const panes = await page
+    .evaluate(() => {
+      const ids = new Set();
+      for (const control of document.querySelectorAll(
+        '[data-target^="#"], [data-bs-target^="#"], [href^="#"]',
+      )) {
+        const target =
+          control.getAttribute('data-target') ??
+          control.getAttribute('data-bs-target') ??
+          control.getAttribute('href');
+        const id = target?.slice(1);
+        if (!id) continue;
+        const pane = document.getElementById(id);
+        if (pane?.classList.contains('tab-pane')) ids.add(id);
+      }
+      // Anything already showing counts too, in case a board has no toggle.
+      for (const pane of document.querySelectorAll('.tab-pane[id]')) {
+        if (pane.querySelector('.leaderboardrow')) ids.add(pane.id);
+      }
+      // Innermost only: a wrapper pane containing other panes is not a board.
+      return [...ids].filter((id) => {
+        const pane = document.getElementById(id);
+        return pane && pane.querySelector('.tab-pane') === null;
+      });
+    })
+    .catch(() => []);
+
+  const ladders = [];
+  const labels = [];
+  let pagesWalked = 0;
   let exhausted = true;
 
-  for (let round = 0; round < MAX_PAGES; round += 1) {
-    const groups = await page.evaluate(extractRows);
+  const scopes = panes.length > 0 ? panes : [null];
 
-    let added = 0;
-    groups.forEach((rows, index) => {
-      merged[index] ??= [];
-      seen[index] ??= new Set();
-      for (const row of rows) {
-        const key = rowKey(row);
-        if (seen[index].has(key)) continue;
-        seen[index].add(key);
-        merged[index].push(row);
-        added += 1;
+  for (const paneId of scopes) {
+    // A hidden pane's pager cannot be clicked, so switch to it first. Bootstrap
+    // tabs are driven by a control pointing at the pane; any of these will do.
+    if (paneId) {
+      await page
+        .evaluate((id) => {
+          const control = document.querySelector(
+            `[href="#${id}"], [data-target="#${id}"], [data-bs-target="#${id}"]`,
+          );
+          if (control) control.click();
+        }, paneId)
+        .catch(() => {});
+      await page.waitForTimeout(350);
+    }
+
+    const rows = [];
+    const seen = new Set();
+    let pages = 0;
+
+    for (let round = 0; round < MAX_PAGES; round += 1) {
+      const groups = await page
+        .evaluate(extractRows, paneId ? { known, scope: `#${paneId}` } : known)
+        .catch(() => []);
+
+      let added = 0;
+      for (const group of groups) {
+        for (const row of group) {
+          const key = rowKey(row);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          rows.push(row);
+          added += 1;
+        }
       }
-    });
 
-    pages = round + 1;
-    // A page that adds nothing means the control is looping or we are done.
-    if (round > 0 && added === 0) break;
+      pages = round + 1;
+      // A page that adds nothing means the pager is looping or we are done.
+      if (round > 0 && added === 0) break;
 
-    const clicked = await page
-      .evaluate((pattern) => {
-        const source = new RegExp(pattern.source, pattern.flags);
-        const controls = [...document.querySelectorAll('button, a, [role="button"]')];
-        const next = controls.find((control) => {
-          const label =
-            (control.innerText || control.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
-          if (!source.test(label)) return false;
-          if (control.disabled || control.getAttribute('aria-disabled') === 'true') return false;
-          return control.offsetParent !== null;
-        });
-        if (!next) return false;
-        next.click();
-        return true;
-      }, { source: NEXT.source, flags: NEXT.flags })
-      .catch(() => false);
+      const clicked = await page
+        .evaluate(
+          ({ id, source, flags }) => {
+            const pattern = new RegExp(source, flags);
+            // Only this board's pager. Clicking every "Next" on the page
+            // advanced hidden boards and left the visible one behind.
+            const within = id ? document.getElementById(id) : document;
+            if (!within) return false;
+            const next = [...within.querySelectorAll('button, a, [role="button"]')].find((control) => {
+              const label = (control.innerText || control.getAttribute('aria-label') || '')
+                .replace(/\s+/g, ' ')
+                .trim();
+              if (!pattern.test(label)) return false;
+              if (control.disabled || control.getAttribute('aria-disabled') === 'true') return false;
+              return control.offsetParent !== null;
+            });
+            if (!next) return false;
+            next.click();
+            return true;
+          },
+          { id: paneId, source: NEXT.source, flags: NEXT.flags },
+        )
+        .catch(() => false);
 
-    if (!clicked) break;
-    // Client-side paging, so there is nothing to wait on but the render.
-    await page.waitForTimeout(400);
+      if (!clicked) break;
+      // The rows are fetched, so give the board a moment to redraw.
+      await page.waitForTimeout(600);
+      if (round === MAX_PAGES - 1) exhausted = false;
+    }
 
-    if (round === MAX_PAGES - 1) exhausted = false;
+    pagesWalked += pages;
+    if (rows.length >= 3) {
+      // The pane's id says whose board this is. `tabeventwidesteps` is the
+      // event-wide, national one; ranking against it and calling the result
+      // "Across KPMG" would be confidently wrong, which is the failure mode
+      // worth the most care here.
+      const isOurOrg = !paneId || /org/i.test(paneId);
+      if (isOurOrg) ladders.push(rows);
+      labels.push(`${paneId ?? 'page'}:${rows.length}${isOurOrg ? '' : ' (not ours, skipped)'}`);
+    }
   }
 
-  return { ladders: merged.filter((rows) => rows.length >= 3), pages, exhausted };
+  return { ladders, labels, pages: pagesWalked, exhausted };
 }
 
 /**
@@ -551,14 +735,15 @@ async function readAllPages(page) {
  * against links that were present but hidden.
  */
 async function readLadder(page, url, teams, members) {
+  const known = [...teams, ...members].map((entity) => entity.name);
   const empty = { steps: new Map(), raised: new Map() };
   const nothing = {
     teamPlacements: empty,
     memberPlacements: empty,
     matched: 0,
     tables: [],
-    aggregates: {},
     groups: [],
+    labels: [],
     pages: 0,
     exhausted: true,
     shape: { links: 0, tables: 0, headings: '' },
@@ -588,9 +773,8 @@ async function readLadder(page, url, teams, members) {
       .join(' / '),
   }));
 
-  const walk = await readAllPages(page);
+  const walk = await readAllPages(page, known);
   const tables = walk.ladders;
-  const aggregates = sane(await page.evaluate(extractAggregates), tables);
 
   const teamPlacements = { steps: new Map(), raised: new Map() };
   const memberPlacements = { steps: new Map(), raised: new Map() };
@@ -610,8 +794,8 @@ async function readLadder(page, url, teams, members) {
       teamPlacements.steps.size + teamPlacements.raised.size +
       memberPlacements.steps.size + memberPlacements.raised.size,
     tables,
-    aggregates,
     groups: tables.map((rows) => rows.length),
+    labels: walk.labels,
     pages: walk.pages,
     exhausted: walk.exhausted,
     shape,
@@ -680,7 +864,6 @@ async function main() {
     let memberPlacements = { steps: new Map(), raised: new Map() };
     let matched = 0;
     let tables = [];
-    const readings = {};
 
     for (const url of CANDIDATE_URLS) {
       const attempt = await readLadder(page, url, teams, members);
@@ -688,21 +871,11 @@ async function main() {
       // another participant's name or figures — this log is public.
       console.log(
         `  ${url.replace(ORIGIN, '')} → ${attempt.shape.links} fundraiser links, ` +
-          `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}] ` +
+          `${attempt.shape.tables} tables, boards [${attempt.labels?.join(', ') || 'none'}] ` +
           `over ${attempt.pages} page(s)${attempt.exhausted ? '' : ' (CAPPED — field incomplete)'}, ` +
           `matched ${attempt.matched} of ours` +
-          (Object.keys(attempt.aggregates).length
-            ? ` · totals: ${Object.entries(attempt.aggregates).map(([k, v]) => `${k}=${v}`).join(' ')}`
-            : '') +
           (attempt.shape.headings ? ` · headings: ${attempt.shape.headings}` : ''),
       );
-      // Every page's reading of the same figure is kept, so disagreement can be
-      // spotted below rather than silently resolved by whichever page came
-      // first. The last run had steps=161520000 on one page and steps=513147 on
-      // another; picking either would have been a coin toss presented as fact.
-      for (const [key, value] of Object.entries(attempt.aggregates)) {
-        (readings[key] ??= new Set()).add(value);
-      }
       if (attempt.matched > matched) {
         ({ teamPlacements, memberPlacements, matched, tables } = attempt);
       }
@@ -717,25 +890,49 @@ async function main() {
       );
     }
 
-    // Only figures every page agreed on. A disagreement means we do not know
-    // which is the organisation's, so we keep neither and say so.
-    const aggregates = {};
-    for (const [key, values] of Object.entries(readings)) {
-      if (values.size === 1) aggregates[key] = [...values][0];
-      else console.warn(`  ! dropped ${key}: pages disagreed (${[...values].join(' vs ')})`);
-    }
-    if (aggregates.participants && aggregates.teams && aggregates.teams > aggregates.participants) {
-      console.warn('  ! dropped teams: more teams than participants, so one of them is not ours');
-      delete aggregates.teams;
+    // Every one of ours, named, with the rank computed for them. These are our
+    // own names — already public on the site — so this reveals nothing, and it
+    // is the only way to tell a good parse from a plausible-looking bad one.
+    // Four of these are known independently (Dionne Marks 16, chloe egle 20,
+    // Finding Our Footing 7, Escalated to the Stepping Committee 10); if the
+    // run disagrees with those, the parse is wrong however healthy it looks.
+    const report = (label, entities, placements) => {
+      const lines = entities.map((entity) => {
+        const place = placements[entity.id];
+        if (!place) return `${entity.name} —`;
+        const parts = [];
+        if (place.steps) parts.push(`${place.steps.rank}/${place.steps.of} steps`);
+        if (place.raised) parts.push(`${place.raised.rank}/${place.raised.of} raised`);
+        return `${entity.name} ${parts.join(', ')}`;
+      });
+      const missing = entities.filter((entity) => !placements[entity.id]).length;
+      console.log(`${label} (${entities.length - missing}/${entities.length} placed): ${lines.join(' · ')}`);
+      return missing;
+    };
+
+    const teamRows = byEntity(teamPlacements);
+    const memberRows = byEntity(memberPlacements);
+    const unplaced = report('Teams', teams, teamRows) + report('Members', members, memberRows);
+    if (unplaced > 0) {
+      console.warn(
+        `  ! ${unplaced} of ours have no placement. Either the field is incomplete or a name did ` +
+          `not match — worth chasing rather than shipping a partial board.`,
+      );
     }
 
     const before = previous ? JSON.parse(previous) : null;
     const next = {
       updated: new Date().toISOString(),
       scope: ORG,
-      org: { name: ORG.toUpperCase(), ...aggregates },
-      teams: withMovement(byEntity(teamPlacements), before?.teams),
-      members: withMovement(byEntity(memberPlacements), before?.members),
+      // The organisation's name only. Captions on that page produced a wrong
+      // figure three times running — 467,221 participants for a field of 209,
+      // 513,147 steps when our twelve alone have more than a million, and
+      // 167,385,000 which is the national total — each plausible enough to
+      // render without looking broken. The boards themselves give a field size,
+      // and that is the one number here we can actually prove.
+      org: { name: ORG.toUpperCase() },
+      teams: withMovement(teamRows, before?.teams),
+      members: withMovement(memberRows, before?.members),
     };
     const serialised = `${JSON.stringify(next, null, 2)}\n`;
 
