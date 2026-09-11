@@ -15,6 +15,11 @@ Every participant is clickable — their profile shows daily average, progress a
 target, a projection for the end of the month, how many steps a day they need from here, their share
 of the team's total, and more. Team cards open a dialog of their own in the same way.
 
+Every chart is a deck of two, swapped by the buttons beneath it or by swiping across it: **So far**,
+the cumulative line, and **Projected finish** — where 30 September was heading as of each day, which
+rises and falls the way a price does rather than only ever climbing. Teams, individuals and the
+whole-field total all get both.
+
 Inside either dialog, and on the Profile page, a pair of chips switches which field the figures are
 measured against: **This challenge** (the twelve of us, the default) or **Across KPMG** (the whole
 organisation our teams are registered under). The second chip appears only where the leaderboard
@@ -137,7 +142,8 @@ assets/js/stats.js          the stat blocks shared by the dialog and the Profile
 assets/js/router.js         switches between the three pages
 assets/js/insights.js       the fun facts and milestones
 assets/js/podium.js         the top-three podiums
-assets/js/chart.js          the cumulative step charts, as inline SVG
+assets/js/chart.js          both step charts, as inline SVG, and their tooltips
+assets/js/deck.js           the two-chart deck: its buttons, swiping and keyboard
 assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets

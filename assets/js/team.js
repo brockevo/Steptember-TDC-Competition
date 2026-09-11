@@ -115,6 +115,7 @@ function buildTeam(team, data) {
       totalDays: clock.totalDays,
       target: team.stepTarget,
       colour: `var(--team-${team.colour})`,
+      subject: team.name,
       label: `${team.name} cumulative steps through September, currently ${formatNumber(team.steps)}`,
       note: team.stepTarget
         ? `Dashed line is the pace to their combined ${formatNumber(team.stepTarget)} step target.`

@@ -45,8 +45,10 @@
 
   --gold: #a97913;
   --good: #0a8f0a;
-  /* The tooltip inverts against the page, so its accent inverts too. */
+  /* The tooltip inverts against the page, so its accents invert too. A fall
+     also carries a sign and a figure, so colour is never the only teller. */
   --tip-accent: #6ee7a8;
+  --tip-down: #fca5a5;
 
   --r-card: 28px;
   --r-mid: 20px;
@@ -94,6 +96,7 @@
   --d-gold: #e0a32c;
   --d-good: #35c635;
   --d-tip-accent: #0a7d3f;
+  --d-tip-down: #a31111;
 
   --d-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.7);
   --d-shadow-lift: 0 8px 16px -8px rgba(0, 0, 0, 0.5), 0 32px 64px -32px rgba(0, 0, 0, 0.8);
@@ -121,6 +124,7 @@
     --gold: var(--d-gold);
     --good: var(--d-good);
     --tip-accent: var(--d-tip-accent);
+    --tip-down: var(--d-tip-down);
     --shadow: var(--d-shadow);
     --shadow-lift: var(--d-shadow-lift);
   }
@@ -147,6 +151,7 @@
   --gold: var(--d-gold);
   --good: var(--d-good);
   --tip-accent: var(--d-tip-accent);
+  --tip-down: var(--d-tip-down);
   --shadow: var(--d-shadow);
   --shadow-lift: var(--d-shadow-lift);
 }
@@ -1114,6 +1119,13 @@ dialog.profile::backdrop {
   cursor: pointer;
 }
 
+/* The dot marking the hovered day is decoration drawn on top of the very band
+   that summoned it. Without this it takes the pointer off that band, so sliding
+   along the line stops updating the moment the cursor catches up with itself. */
+.chart-cursor {
+  pointer-events: none;
+}
+
 /* Sits above the hovered point, centred on it and clamped inside the card. */
 .chart-tip {
   position: absolute;
@@ -1147,6 +1159,11 @@ dialog.profile::backdrop {
 
 .tip-up {
   color: var(--tip-accent);
+  font-weight: 700;
+}
+
+.tip-down {
+  color: var(--tip-down);
   font-weight: 700;
 }
 
@@ -1776,7 +1793,7 @@ footer.site ul {
 }
 
 .placements h3,
-.profile-me .chart-block + .mini-lane {
+.profile-me .chart-deck + .mini-lane {
   margin-top: 0;
 }
 
@@ -1788,7 +1805,7 @@ footer.site ul {
   margin-bottom: 12px;
 }
 
-.profile-me .chart-block {
+.profile-me .chart-deck {
   margin-bottom: 22px;
 }
 
@@ -1963,4 +1980,61 @@ footer.site ul {
 .team-top:hover h3 {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* ----------------------------------------------------------- chart deck --- */
+
+/* Two views of one line, side by side in a track that slides. The viewport
+   clips; `pan-y` hands vertical movement straight to the page so swiping the
+   deck never costs the reader their scroll. */
+.deck-viewport {
+  overflow: hidden;
+  border-radius: var(--r-mid);
+  touch-action: pan-y;
+}
+
+.deck-track {
+  display: flex;
+  transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.deck-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.deck-nav {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.deck-tab {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.deck-tab:hover {
+  color: var(--ink-secondary);
+  border-color: var(--hairline-strong);
+}
+
+.deck-tab.is-active {
+  background: var(--sunk);
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-track {
+    transition: none;
+  }
 }
