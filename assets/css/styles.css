@@ -1863,9 +1863,14 @@ footer.site ul {
 
 /* ------------------------------------------------------- scope switcher --- */
 
+/* The chips split the row evenly and run the full width of the panel, so they
+   line up with the stat grid beneath rather than trailing off mid-row. Equal
+   columns rather than `flex: 1`, so the two stay the same width whatever their
+   labels say — a wider chip would read as the more important scope. */
 .scopes {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 8px;
   margin-bottom: 18px;
 }
@@ -1874,12 +1879,13 @@ footer.site ul {
   font: inherit;
   font-size: 13px;
   font-weight: 700;
-  padding: 9px 16px;
+  padding: 10px 12px;
   border-radius: var(--r-pill);
   border: 1px solid var(--hairline-strong);
   background: transparent;
   color: var(--ink-secondary);
   cursor: pointer;
+  text-align: center;
 }
 
 .scope:hover {
