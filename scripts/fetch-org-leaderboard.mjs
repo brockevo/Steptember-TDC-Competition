@@ -51,15 +51,12 @@ const LOGIN_URL = `${ORIGIN}/login/view/org-leaderboard`;
  * run that tries several is worth more than several runs that each try one.
  */
 const CANDIDATE_URLS = [
-  // The full boards, and where the screenshots of the real page came from. The
-  // nav calls these Leaderboards → Individuals / Teams / Organisations, and
-  // they are the only pages that list the whole field.
-  `${ORIGIN}/leaderboards-individuals`,
-  `${ORIGIN}/leaderboards-teams`,
-  `${ORIGIN}/leaderboards-organisations`,
-  // The signed-in dashboard. Worth keeping, but it carries top-ten widgets
-  // rather than a board — which is exactly why every earlier run read ten rows
-  // and matched nobody: none of our twelve are in KPMG's top ten of 209.
+  // The signed-in dashboard, and the only page that carries our organisation's
+  // own boards. `/leaderboards-individuals` and `/leaderboards-teams` are the
+  // national ones: a run against those placed our teams 505th, 733rd and 854th
+  // of 1500, which are real numbers for the wrong field. Ranking against all of
+  // Steptember while the page says "Across KPMG" would be worse than showing
+  // nothing, so they are not consulted here.
   `${ORIGIN}/login/view/org-leaderboard`,
   `${ORIGIN}/fundraisers/${ORG}`,
 ];
@@ -119,7 +116,11 @@ export function matchRow(row, entities) {
  * those groups the way it would have used separate tables, so the team ladder
  * and the participant ladder keep their own field sizes.
  */
-export function extractRows(known = []) {
+export function extractRows(options = []) {
+  // An array is still just the roster, so existing callers keep working; an
+  // object also carries `scope`, a selector confining the read to one board.
+  const { known = [], scope = null } = Array.isArray(options) ? { known: options } : options;
+  const root = (scope ? document.querySelector(scope) : document) ?? document;
   /**
    * Our own roster, normalised. The page cannot tell us which repeated
    * structure is the ladder, but we know exactly who we are looking for: a set
@@ -174,7 +175,7 @@ export function extractRows(known = []) {
   //
   // The rank is printed, so it does not have to be derived from a field we
   // walked — which also means a rank is right even if pagination stops early.
-  const marked = [...document.querySelectorAll('.leaderboardrow')];
+  const marked = [...root.querySelectorAll('.leaderboardrow')];
   if (marked.length > 0) {
     // Two boards sit side by side — fundraising and steps — each in its own
     // `.leaderboard` container with its own pager. Grouping by container keeps
@@ -213,7 +214,7 @@ export function extractRows(known = []) {
 
   const groups = new Map();
 
-  for (const link of document.querySelectorAll('a[href*="/fundraisers/"]')) {
+  for (const link of root.querySelectorAll('a[href*="/fundraisers/"]')) {
     const name = (link.innerText || '').replace(/\s+/g, ' ').trim();
     if (!name) continue;
 
@@ -258,7 +259,7 @@ export function extractRows(known = []) {
   const LADDER_HEADING = /top\s+(steppers|fundraisers|teams)/i;
 
   const ladders = [];
-  for (const heading of document.querySelectorAll('h1, h2, h3, h4')) {
+  for (const heading of root.querySelectorAll('h1, h2, h3, h4')) {
     if (!LADDER_HEADING.test(heading.innerText || '')) continue;
 
     // The block after the heading, up to the next heading.
@@ -584,61 +585,120 @@ const rowKey = (row) => `${row.rank ?? ''}|${normalise(row.name)}|${row.steps}|$
  */
 async function readAllPages(page, known) {
   const NEXT = /^(next|more|show more|load more|view more|see more|›|»|→)\s*(page)?$/i;
-  /** 209 participants at five a page is 42; the cap is slack, not a target. */
+  /** 209 rows at five a page is 42; the cap is slack, not a target. */
   const MAX_PAGES = 120;
 
-  const merged = [];
-  const seen = [];
-  let pages = 0;
+  /**
+   * The boards are stacked in the page, one per tab, and only one shows at a
+   * time — event-wide, business, org-teams, org-individuals. Reading
+   * `.leaderboardrow` across the whole document mixed all four together and
+   * clicked "Next" buttons belonging to hidden ones, which is why the walk
+   * stalled at ten rows. So find the innermost panes that hold a board and
+   * treat each as its own thing.
+   *
+   * The pane's own id says what it is — `taborgindsteps`, `taborgteamsteps`,
+   * `tabeventwidesteps` — which is far better than inferring scope from the
+   * numbers, and is how a national rank is told apart from an organisation one.
+   */
+  const panes = await page
+    .evaluate(() => {
+      const hasRows = (element) => element.querySelector('.leaderboardrow') !== null;
+      return [...document.querySelectorAll('.tab-pane[id]')]
+        .filter(hasRows)
+        .filter((pane) => ![...pane.querySelectorAll('.tab-pane')].some(hasRows))
+        .map((pane) => pane.id);
+    })
+    .catch(() => []);
+
+  const ladders = [];
+  const labels = [];
+  let pagesWalked = 0;
   let exhausted = true;
 
-  for (let round = 0; round < MAX_PAGES; round += 1) {
-    const groups = await page.evaluate(extractRows, known);
+  const scopes = panes.length > 0 ? panes : [null];
 
-    let added = 0;
-    groups.forEach((rows, index) => {
-      merged[index] ??= [];
-      seen[index] ??= new Set();
-      for (const row of rows) {
-        const key = rowKey(row);
-        if (seen[index].has(key)) continue;
-        seen[index].add(key);
-        merged[index].push(row);
-        added += 1;
+  for (const paneId of scopes) {
+    // A hidden pane's pager cannot be clicked, so switch to it first. Bootstrap
+    // tabs are driven by a control pointing at the pane; any of these will do.
+    if (paneId) {
+      await page
+        .evaluate((id) => {
+          const control = document.querySelector(
+            `[href="#${id}"], [data-target="#${id}"], [data-bs-target="#${id}"]`,
+          );
+          if (control) control.click();
+        }, paneId)
+        .catch(() => {});
+      await page.waitForTimeout(350);
+    }
+
+    const rows = [];
+    const seen = new Set();
+    let pages = 0;
+
+    for (let round = 0; round < MAX_PAGES; round += 1) {
+      const groups = await page
+        .evaluate(extractRows, paneId ? { known, scope: `#${paneId}` } : known)
+        .catch(() => []);
+
+      let added = 0;
+      for (const group of groups) {
+        for (const row of group) {
+          const key = rowKey(row);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          rows.push(row);
+          added += 1;
+        }
       }
-    });
 
-    pages = round + 1;
-    // A page that adds nothing means the control is looping or we are done.
-    if (round > 0 && added === 0) break;
+      pages = round + 1;
+      // A page that adds nothing means the pager is looping or we are done.
+      if (round > 0 && added === 0) break;
 
-    const clicked = await page
-      .evaluate((pattern) => {
-        const source = new RegExp(pattern.source, pattern.flags);
-        const controls = [...document.querySelectorAll('button, a, [role="button"]')];
-        // Every pager, not the first. The page carries two boards side by side
-        // — fundraising and steps — each with its own NEXT, so clicking one
-        // advanced half the page and left the other reading page one forever.
-        const pagers = controls.filter((control) => {
-          const label =
-            (control.innerText || control.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
-          if (!source.test(label)) return false;
-          if (control.disabled || control.getAttribute('aria-disabled') === 'true') return false;
-          return control.offsetParent !== null;
-        });
-        for (const pager of pagers) pager.click();
-        return pagers.length > 0;
-      }, { source: NEXT.source, flags: NEXT.flags })
-      .catch(() => false);
+      const clicked = await page
+        .evaluate(
+          ({ id, source, flags }) => {
+            const pattern = new RegExp(source, flags);
+            // Only this board's pager. Clicking every "Next" on the page
+            // advanced hidden boards and left the visible one behind.
+            const within = id ? document.getElementById(id) : document;
+            if (!within) return false;
+            const next = [...within.querySelectorAll('button, a, [role="button"]')].find((control) => {
+              const label = (control.innerText || control.getAttribute('aria-label') || '')
+                .replace(/\s+/g, ' ')
+                .trim();
+              if (!pattern.test(label)) return false;
+              if (control.disabled || control.getAttribute('aria-disabled') === 'true') return false;
+              return control.offsetParent !== null;
+            });
+            if (!next) return false;
+            next.click();
+            return true;
+          },
+          { id: paneId, source: NEXT.source, flags: NEXT.flags },
+        )
+        .catch(() => false);
 
-    if (!clicked) break;
-    // Client-side paging, so there is nothing to wait on but the render.
-    await page.waitForTimeout(400);
+      if (!clicked) break;
+      // The rows are fetched, so give the board a moment to redraw.
+      await page.waitForTimeout(600);
+      if (round === MAX_PAGES - 1) exhausted = false;
+    }
 
-    if (round === MAX_PAGES - 1) exhausted = false;
+    pagesWalked += pages;
+    if (rows.length >= 3) {
+      // The pane's id says whose board this is. `tabeventwidesteps` is the
+      // event-wide, national one; ranking against it and calling the result
+      // "Across KPMG" would be confidently wrong, which is the failure mode
+      // worth the most care here.
+      const isOurOrg = !paneId || /org/i.test(paneId);
+      if (isOurOrg) ladders.push(rows);
+      labels.push(`${paneId ?? 'page'}:${rows.length}${isOurOrg ? '' : ' (not ours, skipped)'}`);
+    }
   }
 
-  return { ladders: merged.filter((rows) => rows.length >= 3), pages, exhausted };
+  return { ladders, labels, pages: pagesWalked, exhausted };
 }
 
 /**
@@ -660,6 +720,7 @@ async function readLadder(page, url, teams, members) {
     tables: [],
     aggregates: {},
     groups: [],
+    labels: [],
     pages: 0,
     exhausted: true,
     shape: { links: 0, tables: 0, headings: '' },
@@ -713,6 +774,7 @@ async function readLadder(page, url, teams, members) {
     tables,
     aggregates,
     groups: tables.map((rows) => rows.length),
+    labels: walk.labels,
     pages: walk.pages,
     exhausted: walk.exhausted,
     shape,
@@ -789,7 +851,7 @@ async function main() {
       // another participant's name or figures — this log is public.
       console.log(
         `  ${url.replace(ORIGIN, '')} → ${attempt.shape.links} fundraiser links, ` +
-          `${attempt.shape.tables} tables, lists [${attempt.groups.join(', ') || 'none'}] ` +
+          `${attempt.shape.tables} tables, boards [${attempt.labels?.join(', ') || 'none'}] ` +
           `over ${attempt.pages} page(s)${attempt.exhausted ? '' : ' (CAPPED — field incomplete)'}, ` +
           `matched ${attempt.matched} of ours` +
           (Object.keys(attempt.aggregates).length
