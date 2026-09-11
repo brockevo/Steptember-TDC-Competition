@@ -13,7 +13,12 @@ podiums and the combined chart) and **Profile** (your own progress).
 
 Every participant is clickable — their profile shows daily average, progress against their own step
 target, a projection for the end of the month, how many steps a day they need from here, their share
-of the team's total, and more.
+of the team's total, and more. Team cards open a dialog of their own in the same way.
+
+Inside either dialog, and on the Profile page, a pair of chips switches which field the figures are
+measured against: **This challenge** (the twelve of us, the default) or **Across KPMG** (the whole
+organisation our teams are registered under). The second chip appears only where the leaderboard
+scrape actually found that team or person, so there is never an empty tab.
 
 It is a static site: plain HTML, CSS and JavaScript, no build step and no dependencies.
 
@@ -125,6 +130,8 @@ assets/css/styles.css       design tokens, light/dark, responsive layout
 assets/js/data.js           loads the JSON and derives every figure shown
 assets/js/app.js            renders the hero, standings, team cards and leaderboards
 assets/js/member.js         the member profile dialog
+assets/js/team.js           the team dialog, built the same way
+assets/js/scope.js          the This challenge / Across KPMG switcher and its panels
 assets/js/profile.js        the Profile page: pick yourself, baseline, before-and-after
 assets/js/stats.js          the stat blocks shared by the dialog and the Profile page
 assets/js/router.js         switches between the three pages

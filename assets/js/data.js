@@ -228,6 +228,9 @@ export async function loadCompetition() {
         teamMates.filter((other) => other.steps > member.steps).length + 1,
       teamSize: teamMates.length,
       placements: placements.members?.[member.id] ?? null,
+      // Their team's own standing, so the organisation panel can show a person
+      // and their team side by side without reaching back up the tree.
+      teamPlacements: placements.teams?.[member.teamId] ?? null,
       shareOfTeamSteps: member.teamSteps > 0 ? member.steps / member.teamSteps : 0,
       shareOfTeamRaised: member.teamRaised > 0 ? (member.raised ?? 0) / member.teamRaised : 0,
       dailyAverage,
@@ -282,6 +285,7 @@ export async function loadCompetition() {
     clock,
     history,
     teams: teamsWithStats,
+    teamsById: new Map(teamsWithStats.map((team) => [team.id, team])),
     members,
     membersById,
     totals: {
