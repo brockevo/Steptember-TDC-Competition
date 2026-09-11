@@ -600,13 +600,37 @@ async function readAllPages(page, known) {
    * `tabeventwidesteps` — which is far better than inferring scope from the
    * numbers, and is how a national rank is told apart from an organisation one.
    */
+  // Discovered from the tab controls, not from what a pane currently holds. A
+  // board only renders once its tab is opened, so the previous rule — "panes
+  // that already have rows" — could only ever find whichever tab happened to be
+  // showing. INDIVIDUAL is the default in both columns, so the team boards were
+  // filtered out before anything clicked them, and teams came back 0 of 3.
+  // A pane still empty after being opened is genuinely empty; one that was
+  // never opened tells us nothing at all.
   const panes = await page
     .evaluate(() => {
-      const hasRows = (element) => element.querySelector('.leaderboardrow') !== null;
-      return [...document.querySelectorAll('.tab-pane[id]')]
-        .filter(hasRows)
-        .filter((pane) => ![...pane.querySelectorAll('.tab-pane')].some(hasRows))
-        .map((pane) => pane.id);
+      const ids = new Set();
+      for (const control of document.querySelectorAll(
+        '[data-target^="#"], [data-bs-target^="#"], [href^="#"]',
+      )) {
+        const target =
+          control.getAttribute('data-target') ??
+          control.getAttribute('data-bs-target') ??
+          control.getAttribute('href');
+        const id = target?.slice(1);
+        if (!id) continue;
+        const pane = document.getElementById(id);
+        if (pane?.classList.contains('tab-pane')) ids.add(id);
+      }
+      // Anything already showing counts too, in case a board has no toggle.
+      for (const pane of document.querySelectorAll('.tab-pane[id]')) {
+        if (pane.querySelector('.leaderboardrow')) ids.add(pane.id);
+      }
+      // Innermost only: a wrapper pane containing other panes is not a board.
+      return [...ids].filter((id) => {
+        const pane = document.getElementById(id);
+        return pane && pane.querySelector('.tab-pane') === null;
+      });
     })
     .catch(() => []);
 
@@ -718,7 +742,6 @@ async function readLadder(page, url, teams, members) {
     memberPlacements: empty,
     matched: 0,
     tables: [],
-    aggregates: {},
     groups: [],
     labels: [],
     pages: 0,
@@ -752,7 +775,6 @@ async function readLadder(page, url, teams, members) {
 
   const walk = await readAllPages(page, known);
   const tables = walk.ladders;
-  const aggregates = sane(await page.evaluate(extractAggregates), tables);
 
   const teamPlacements = { steps: new Map(), raised: new Map() };
   const memberPlacements = { steps: new Map(), raised: new Map() };
@@ -772,7 +794,6 @@ async function readLadder(page, url, teams, members) {
       teamPlacements.steps.size + teamPlacements.raised.size +
       memberPlacements.steps.size + memberPlacements.raised.size,
     tables,
-    aggregates,
     groups: tables.map((rows) => rows.length),
     labels: walk.labels,
     pages: walk.pages,
@@ -843,7 +864,6 @@ async function main() {
     let memberPlacements = { steps: new Map(), raised: new Map() };
     let matched = 0;
     let tables = [];
-    const readings = {};
 
     for (const url of CANDIDATE_URLS) {
       const attempt = await readLadder(page, url, teams, members);
@@ -854,18 +874,8 @@ async function main() {
           `${attempt.shape.tables} tables, boards [${attempt.labels?.join(', ') || 'none'}] ` +
           `over ${attempt.pages} page(s)${attempt.exhausted ? '' : ' (CAPPED — field incomplete)'}, ` +
           `matched ${attempt.matched} of ours` +
-          (Object.keys(attempt.aggregates).length
-            ? ` · totals: ${Object.entries(attempt.aggregates).map(([k, v]) => `${k}=${v}`).join(' ')}`
-            : '') +
           (attempt.shape.headings ? ` · headings: ${attempt.shape.headings}` : ''),
       );
-      // Every page's reading of the same figure is kept, so disagreement can be
-      // spotted below rather than silently resolved by whichever page came
-      // first. The last run had steps=161520000 on one page and steps=513147 on
-      // another; picking either would have been a coin toss presented as fact.
-      for (const [key, value] of Object.entries(attempt.aggregates)) {
-        (readings[key] ??= new Set()).add(value);
-      }
       if (attempt.matched > matched) {
         ({ teamPlacements, memberPlacements, matched, tables } = attempt);
       }
@@ -878,18 +888,6 @@ async function main() {
         `none of the ${CANDIDATE_URLS.length} candidate pages carried a ladder with ` +
           `our ${teams.length} teams or ${members.length} members on it`,
       );
-    }
-
-    // Only figures every page agreed on. A disagreement means we do not know
-    // which is the organisation's, so we keep neither and say so.
-    const aggregates = {};
-    for (const [key, values] of Object.entries(readings)) {
-      if (values.size === 1) aggregates[key] = [...values][0];
-      else console.warn(`  ! dropped ${key}: pages disagreed (${[...values].join(' vs ')})`);
-    }
-    if (aggregates.participants && aggregates.teams && aggregates.teams > aggregates.participants) {
-      console.warn('  ! dropped teams: more teams than participants, so one of them is not ours');
-      delete aggregates.teams;
     }
 
     // Every one of ours, named, with the rank computed for them. These are our
@@ -926,7 +924,13 @@ async function main() {
     const next = {
       updated: new Date().toISOString(),
       scope: ORG,
-      org: { name: ORG.toUpperCase(), ...aggregates },
+      // The organisation's name only. Captions on that page produced a wrong
+      // figure three times running — 467,221 participants for a field of 209,
+      // 513,147 steps when our twelve alone have more than a million, and
+      // 167,385,000 which is the national total — each plausible enough to
+      // render without looking broken. The boards themselves give a field size,
+      // and that is the one number here we can actually prove.
+      org: { name: ORG.toUpperCase() },
       teams: withMovement(teamRows, before?.teams),
       members: withMovement(memberRows, before?.members),
     };
