@@ -51,10 +51,17 @@ const LOGIN_URL = `${ORIGIN}/login/view/org-leaderboard`;
  * run that tries several is worth more than several runs that each try one.
  */
 const CANDIDATE_URLS = [
+  // The full boards, and where the screenshots of the real page came from. The
+  // nav calls these Leaderboards → Individuals / Teams / Organisations, and
+  // they are the only pages that list the whole field.
+  `${ORIGIN}/leaderboards-individuals`,
+  `${ORIGIN}/leaderboards-teams`,
+  `${ORIGIN}/leaderboards-organisations`,
+  // The signed-in dashboard. Worth keeping, but it carries top-ten widgets
+  // rather than a board — which is exactly why every earlier run read ten rows
+  // and matched nobody: none of our twelve are in KPMG's top ten of 209.
   `${ORIGIN}/login/view/org-leaderboard`,
   `${ORIGIN}/fundraisers/${ORG}`,
-  `${ORIGIN}/fundraisers/${ORG}/leaderboard`,
-  `${ORIGIN}/organisations/${ORG}`,
 ];
 
 const EMAIL = process.env.STEPTEMBER_EMAIL;
@@ -577,8 +584,8 @@ const rowKey = (row) => `${row.rank ?? ''}|${normalise(row.name)}|${row.steps}|$
  */
 async function readAllPages(page, known) {
   const NEXT = /^(next|more|show more|load more|view more|see more|›|»|→)\s*(page)?$/i;
-  /** 191 participants at five a page is 39; the cap is slack, not a target. */
-  const MAX_PAGES = 80;
+  /** 209 participants at five a page is 42; the cap is slack, not a target. */
+  const MAX_PAGES = 120;
 
   const merged = [];
   const seen = [];
