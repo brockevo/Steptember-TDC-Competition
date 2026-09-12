@@ -6,7 +6,7 @@
  */
 
 import { avatar } from './ui.js';
-import { chartBlock } from './chart.js';
+import { chartBlock, moneyBlock } from './chart.js';
 import { fundraisingLane, memberStats, targetLane } from './stats.js';
 import { panelFor, scopesFor, switcher, initSwitcher } from './scope.js';
 import { escapeHtml, formatNumber } from './format.js';
@@ -91,6 +91,16 @@ function buildProfile(member, data) {
       note: member.stepTarget
         ? `Dashed line is the pace to their ${formatNumber(member.stepTarget)} step target.`
         : null,
+    })}
+    ${moneyBlock({
+      values: member.raisedCumulative,
+      dates: data.history.dates,
+      totalDays: clock.totalDays,
+      target: member.fundraisingGoal,
+      colour: `var(--team-${member.teamColour})`,
+      subject: member.name,
+      currency: competition.currency,
+      startsOn: data.money.startsOn,
     })}
     ${deltas.length ? dailyChart(deltas) : ''}
     ${targetLane(member)}

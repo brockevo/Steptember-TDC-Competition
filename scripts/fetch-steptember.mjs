@@ -234,19 +234,78 @@ function dropDefaultPhotos(teams) {
 /* ------------------------------------------------------------------- history */
 
 /**
+ * Today's date where the competition actually happens.
+ *
+ * The runners are UTC, so `toISOString()` rolls over mid-morning in Australia
+ * and money banked on the 12th would be filed under the 13th. The step series
+ * comes from Steptember carrying their own local dates, so a UTC key here would
+ * sit the two measures a day apart on a shared axis.
+ */
+function localDate(now = new Date()) {
+  // en-CA formats as YYYY-MM-DD, which is the shape the step series already uses.
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney' }).format(now);
+}
+
+/**
+ * Appends today's figure to a running series, replacing the entry if today has
+ * already been recorded.
+ *
+ * Every run of the day overwrites, so the committed figure is the last one seen
+ * — effectively end-of-day. Re-running with an unchanged total therefore writes
+ * an identical file, which is what keeps the no-change check from churning a
+ * commit every two hours.
+ */
+function appendToday(series, value, today) {
+  const dates = [...(series?.dates ?? [])];
+  const cumulative = [...(series?.cumulative ?? [])];
+  const amount = Number(value) || 0;
+
+  if (dates.at(-1) === today) cumulative[cumulative.length - 1] = amount;
+  else {
+    dates.push(today);
+    cumulative.push(amount);
+  }
+  return { dates, cumulative };
+}
+
+/**
  * Collects each member's day-by-day series, keeping the committed one for
  * anyone whose report can't be read this run.
+ *
+ * Steps come from Steptember's own per-member activity report, which is why
+ * they reach back to 1 September. **Money has no such report** — the donations
+ * on a team page carry an amount, a donor name and a comment but no date — so
+ * the only way to have a fundraising history is to start writing one down. That
+ * is what the `money` block is: a snapshot per day, from the day we began.
+ *
+ * Only totals are recorded. Donor names and comments sit right beside the
+ * figure in the markup and are other people's personal data; they are never
+ * read into `data/`, the same rule the organisation leaderboard scrape follows.
  */
 function buildHistory(previous, teams) {
+  const today = localDate();
   const members = {};
+  const money = { members: {}, teams: {} };
+
   for (const team of teams) {
+    // A team's own total, not the sum of its members: a team page's figure
+    // includes offline and team-level donations that no member carries.
+    money.teams[team.id] = appendToday(previous.money?.teams?.[team.id], team.raised, today);
+
     for (const member of team.members) {
       const series = member.series ?? previous.members?.[member.id];
       if (series) members[member.id] = series;
       delete member.series; // Lives in history.json, not teams.json.
+
+      money.members[member.id] = appendToday(
+        previous.money?.members?.[member.id],
+        member.raised,
+        today,
+      );
     }
   }
-  return { updated: new Date().toISOString(), members };
+
+  return { updated: new Date().toISOString(), members, money };
 }
 
 /* ---------------------------------------------------------------------- main */
@@ -315,7 +374,11 @@ async function main() {
   const withoutStamp = (teams) => JSON.stringify({ ...teams, competition: { ...teams.competition, lastUpdated: null } });
   const unchanged =
     withoutStamp(nextTeams) === withoutStamp(teamsData) &&
-    JSON.stringify(nextHistory.members) === JSON.stringify(history.members ?? {});
+    JSON.stringify(nextHistory.members) === JSON.stringify(history.members ?? {}) &&
+    // The first run of a new day adds a dated entry even when the total hasn't
+    // moved, and that is a real change worth committing: it records that the
+    // figure still stood on the 13th.
+    JSON.stringify(nextHistory.money) === JSON.stringify(history.money ?? {});
 
   if (DRY_RUN) {
     console.log(unchanged ? '\n[dry run] no changes' : '\n[dry run] changes detected, nothing written');

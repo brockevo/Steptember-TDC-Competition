@@ -18,7 +18,11 @@ of the team's total, and more. Team cards open a dialog of their own in the same
 Every chart is a deck of two, swapped by the buttons beneath it or by swiping across it: **So far**,
 the cumulative line, and **Projected finish** — where 30 September was heading as of each day, which
 rises and falls the way a price does rather than only ever climbing. Teams, individuals and the
-whole-field total all get both.
+whole-field total all get both, for **steps and for money raised**.
+
+Coming back after a while shows a short **"since you last looked"** summary — steps added, money
+raised, any change in your own placing. It is worked out in your browser from a baseline kept in
+`localStorage`, cleared when you dismiss it, and never sent anywhere.
 
 Inside either dialog, and on the Profile page, a pair of chips switches which field the figures are
 measured against: **This challenge** (the twelve of us, the default) or **Across KPMG** (the whole
@@ -65,6 +69,17 @@ The scraper is deliberately cautious, because it is parsing someone else's HTML:
   Members report on different days, so the site carries each person's last known total forward when
   summing a team or the whole field — otherwise a day where somebody hadn't synced would show the
   group's total dropping.
+- **Fundraising history is written by this site, not read from Steptember.** There is an activity
+  report for steps and nothing equivalent for money: the donations listed on a team page carry an
+  amount, a donor and a comment, but no date. So `data/history.json` also holds a `money` block —
+  one snapshot of each member's and each team's total per day, from the day this started recording.
+  Days before that are absent rather than zero, and the chart leaves them blank and says when
+  tracking began, instead of drawing a flat line that would imply a quiet first fortnight.
+
+  The day is keyed to Australian local time, not the runner's UTC clock, so the money and step axes
+  line up. Team totals are recorded separately from the sum of their members, because a team page's
+  figure includes offline and team-level donations. **Only totals are recorded** — donor names and
+  comments sit right beside the figure in the markup and are never read into `data/`.
 
 ### The organisation leaderboard, and the login it needs
 
@@ -144,6 +159,7 @@ assets/js/insights.js       the fun facts and milestones
 assets/js/podium.js         the top-three podiums
 assets/js/chart.js          both step charts, as inline SVG, and their tooltips
 assets/js/deck.js           the two-chart deck: its buttons, swiping and keyboard
+assets/js/digest.js         the "since you last looked" summary for a returning viewer
 assets/js/ui.js             avatars and shared presentational helpers
 assets/js/format.js         number, currency and date formatting
 data/teams.json             source of truth: teams, members, steps, raised, targets

@@ -122,9 +122,12 @@ const isoDate = (date) =>
  * are running totals, a missing day carries the previous value forward, which
  * is what makes team and overall sums add up correctly on every date.
  */
-function buildHistory(historyMembers, clock) {
+function buildHistory(historyMembers, clock, alsoCovering = []) {
   const series = historyMembers ?? {};
-  const allDates = Object.values(series).flatMap((entry) => entry.dates ?? []);
+  // The axis has to reach the last day ANY series reports, money included —
+  // a fundraising figure banked after the last step sync would otherwise fall
+  // off the end of the chart.
+  const allDates = [...Object.values(series).flatMap((entry) => entry.dates ?? []), ...alsoCovering];
   if (allDates.length === 0) {
     return { dates: [], alignedFor: () => [], deltasFor: () => [], hasData: false };
   }
@@ -168,6 +171,63 @@ function buildHistory(historyMembers, clock) {
   return { dates, alignedFor, sumFor, deltasFor, hasData: dates.length > 0 };
 }
 
+/**
+ * Puts the fundraising snapshots on the same axis as the steps.
+ *
+ * One thing differs from the step series, and it matters. Steps carry forward
+ * from zero, because everybody genuinely had none on 1 September. Money cannot:
+ * Steptember publishes no dated donation history, so the record only begins the
+ * day this site started writing one down. Days before that are `null` — not
+ * zero — so the chart can leave them blank instead of drawing a flat line that
+ * would claim nothing was raised all week.
+ */
+function buildMoney(moneyData, dates) {
+  const align = (entry) => {
+    if (!entry?.dates?.length) return null;
+    const byDate = new Map(entry.dates.map((date, index) => [date, entry.cumulative[index]]));
+    const first = entry.dates.reduce((earliest, date) => (date < earliest ? date : earliest));
+    let carried = null;
+    return dates.map((date) => {
+      if (date < first) return null; // Before we were looking. Unknown, not nil.
+      carried = Math.max(byDate.get(date) ?? carried ?? 0, carried ?? 0);
+      return carried;
+    });
+  };
+
+  const members = new Map(
+    Object.entries(moneyData?.members ?? {}).map(([id, entry]) => [id, align(entry)]),
+  );
+  const teams = new Map(
+    Object.entries(moneyData?.teams ?? {}).map(([id, entry]) => [id, align(entry)]),
+  );
+
+  const everyDate = [
+    ...Object.values(moneyData?.members ?? {}),
+    ...Object.values(moneyData?.teams ?? {}),
+  ].flatMap((entry) => entry?.dates ?? []);
+  const startsOn = everyDate.length
+    ? everyDate.reduce((earliest, date) => (date < earliest ? date : earliest))
+    : null;
+
+  /** Every team summed — team totals, so offline donations are counted once. */
+  const total = dates.map((_, index) => {
+    const known = [...teams.values()].map((series) => series?.[index]).filter((v) => v !== null && v !== undefined);
+    return known.length === 0 ? null : known.reduce((sum, value) => sum + value, 0);
+  });
+
+  const hasData = [...teams.values(), ...members.values()].some(
+    (series) => series?.some((value) => value !== null),
+  );
+
+  return {
+    forMember: (id) => members.get(id) ?? null,
+    forTeam: (id) => teams.get(id) ?? null,
+    total,
+    startsOn,
+    hasData,
+  };
+}
+
 export async function loadCompetition() {
   const teamsData = await loadJson('data/teams.json');
   const historyData = await loadJson('data/history.json', { members: {} });
@@ -179,7 +239,13 @@ export async function loadCompetition() {
 
   const { competition } = teamsData;
   const clock = buildClock(competition);
-  const history = buildHistory(historyData.members, clock);
+  const moneyDates = [
+    ...Object.values(historyData.money?.members ?? {}),
+    ...Object.values(historyData.money?.teams ?? {}),
+  ].flatMap((entry) => entry?.dates ?? []);
+  const history = buildHistory(historyData.members, clock, moneyDates);
+  // Not `money`: the per-member loop below already binds that name to a rank.
+  const moneySeries = buildMoney(historyData.money, history.dates);
 
   // --- teams -----------------------------------------------------------------
   const teams = teamsData.teams.map((team) => {
@@ -249,6 +315,7 @@ export async function loadCompetition() {
       gapToPersonAbove: personAbove ? personAbove.steps - member.steps : 0,
       personAbove: personAbove?.name ?? null,
       cumulative: history.alignedFor(member.id),
+      raisedCumulative: moneySeries.forMember(member.id),
       lastDay: deltas.at(-1) ?? null,
       bestDay: deltas.length
         ? deltas.reduce((best, day) => (day.steps > best.steps ? day : best))
@@ -270,6 +337,7 @@ export async function loadCompetition() {
       team.memberCount > 0 ? team.steps / team.memberCount / clock.daysElapsed : 0,
     projectedSteps: Math.round((team.steps / clock.daysElapsed) * clock.totalDays),
     cumulative: history.sumFor?.(team.members.map((member) => member.id)) ?? [],
+    raisedCumulative: moneySeries.forTeam(team.id),
     // What the whole team is aiming at, for the pace line on their chart.
     stepTarget: team.members.reduce((sum, member) => sum + (member.stepTarget ?? 0), 0),
     members: team.members.map((member) => membersById.get(member.id)),
@@ -284,6 +352,7 @@ export async function loadCompetition() {
     competition,
     clock,
     history,
+    money: moneySeries,
     teams: teamsWithStats,
     teamsById: new Map(teamsWithStats.map((team) => [team.id, team])),
     members,
@@ -294,6 +363,7 @@ export async function loadCompetition() {
       goal: teamsWithStats.reduce((sum, team) => sum + (team.goal ?? 0), 0),
       memberCount: members.length,
       cumulative: history.sumFor?.(members.map((member) => member.id)) ?? [],
+      raisedCumulative: moneySeries.total,
       stepTarget: members.reduce((sum, member) => sum + (member.stepTarget ?? 0), 0),
     },
     standings: {
