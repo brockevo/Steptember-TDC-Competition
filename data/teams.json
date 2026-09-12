@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-12T04:11:54.824Z",
+    "lastUpdated": "2026-09-12T06:15:04.753Z",
     "dataSource": "live"
   },
   "teams": [
@@ -44,7 +44,7 @@
           "name": "Leanna Wang",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/leannawang",
-          "steps": 145977,
+          "steps": 152457,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 220154,
+          "steps": 231377,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
