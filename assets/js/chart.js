@@ -8,7 +8,7 @@
  * the 30th, which is what makes a short early line readable.
  */
 
-import { escapeHtml, formatNumber } from './format.js';
+import { escapeHtml, formatMoney, formatNumber } from './format.js';
 
 const PAD = { top: 10, right: 10, bottom: 20, left: 10 };
 
@@ -34,7 +34,14 @@ export function cumulativeChart({
   width = 340,
   height = 150,
 }) {
-  const points = (values ?? []).filter((value) => Number.isFinite(value));
+  // Keep the gap. A series that starts mid-month — fundraising, which has only
+  // been recorded since this site began writing it down — must sit at its real
+  // dates, so the leading unknown days are skipped by INDEX rather than
+  // squeezed out. Filtering them away instead would slide the line back to the
+  // 1st and quietly claim a history we do not have.
+  const all = values ?? [];
+  const from = all.findIndex((value) => Number.isFinite(value));
+  const points = from === -1 ? [] : all.slice(from).filter((value) => Number.isFinite(value));
   if (points.length === 0) {
     return `<p class="chart-empty">No day-by-day figures yet — they appear as soon as steps are logged.</p>`;
   }
@@ -48,10 +55,12 @@ export function cumulativeChart({
 
   const x = (dayIndex) => PAD.left + (dayIndex / (totalDays - 1)) * plotWidth;
   const y = (value) => PAD.top + plotHeight - (value / ceiling) * plotHeight;
+  /** Where the nth point of this series sits, given it may not start on day one. */
+  const at = (index) => x(from + index);
 
-  const line = points.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ');
+  const line = points.map((value, index) => `${at(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ');
   // Close the path down to the baseline so the area beneath can be filled.
-  const area = `${x(0).toFixed(1)},${y(0).toFixed(1)} ${line} ${x(points.length - 1).toFixed(1)},${y(0).toFixed(1)}`;
+  const area = `${at(0).toFixed(1)},${y(0).toFixed(1)} ${line} ${at(points.length - 1).toFixed(1)},${y(0).toFixed(1)}`;
 
   const paceLine = target
     ? `<line x1="${x(0)}" y1="${y(0)}" x2="${x(totalDays - 1)}" y2="${y(target)}"
@@ -84,11 +93,11 @@ export function cumulativeChart({
     <polygon points="${area}" fill="url(#${gradientId})" />
     <polyline points="${line}" fill="none" stroke="${colour}" stroke-width="2.5"
               stroke-linejoin="round" stroke-linecap="round" />
-    <circle cx="${x(points.length - 1).toFixed(1)}" cy="${y(latest).toFixed(1)}" r="4"
+    <circle cx="${at(points.length - 1).toFixed(1)}" cy="${y(latest).toFixed(1)}" r="4"
             fill="${colour}" stroke="var(--surface)" stroke-width="2" />
     ${ticks}
 
-    <g class="chart-hits">${hitBands({ points, dates, totalDays, x, y, height })}</g>
+    <g class="chart-hits">${hitBands({ points, dates: dates?.slice(from), totalDays, x: at, y, height, offset: from })}</g>
     <circle class="chart-cursor" r="5" fill="${colour}" stroke="var(--surface)"
             stroke-width="2" opacity="0" />
   </svg>`;
@@ -105,16 +114,28 @@ export function cumulativeChart({
  * rises and falls the way a price does rather than only ever climbing.
  */
 export function projectionSeries(values, totalDays) {
-  return (values ?? [])
-    .filter((value) => Number.isFinite(value))
-    .map((total, index) => (total / (index + 1)) * totalDays);
+  // Index is preserved rather than compacted: the divisor is "days elapsed", so
+  // a series that starts on the 12th must divide by 12, not by 1. Filtering the
+  // leading gap away first would forecast money from a single day's total.
+  return (values ?? []).map((total, index) =>
+    Number.isFinite(total) ? (total / (index + 1)) * totalDays : null,
+  );
 }
 
-/** "11 Sep" from an ISO date, falling back to the day's position in September. */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * "11 Sep" from an ISO date, falling back to the day's position in September.
+ *
+ * Spelled out rather than left to `toLocaleDateString`, which abbreviates
+ * September as "Sept" in every English locale — so a date formatted that way
+ * sat next to the hardcoded "1 Sep" on the cumulative axis and disagreed with
+ * it. One list, one spelling, every axis and tooltip.
+ */
 function shortDate(iso, dayIndex) {
   const date = iso ? new Date(`${iso}T00:00:00`) : null;
   if (!date || Number.isNaN(date.getTime())) return `${dayIndex + 1} Sep`;
-  return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
 
 /** Short money-less figures for the value axis: 538,732 -> "539k". */
@@ -152,7 +173,9 @@ export function projectionChart({
   width = 340,
   height = 150,
 }) {
-  const points = projectionSeries(values, totalDays);
+  const series = projectionSeries(values, totalDays);
+  const from = series.findIndex((value) => Number.isFinite(value));
+  const points = from === -1 ? [] : series.slice(from).filter((value) => Number.isFinite(value));
   if (points.length === 0) {
     return `<p class="chart-empty">No day-by-day figures yet — the forecast appears once steps are logged.</p>`;
   }
@@ -198,7 +221,7 @@ export function projectionChart({
     .map((dayIndex) => {
       const anchor = dayIndex === 0 ? 'start' : dayIndex === lastDay ? 'end' : 'middle';
       return `<text x="${x(dayIndex).toFixed(1)}" y="${height - 6}" text-anchor="${anchor}"
-                    class="chart-tick">${escapeHtml(shortDate(dates?.[dayIndex], dayIndex))}</text>`;
+                    class="chart-tick">${escapeHtml(shortDate(dates?.[from + dayIndex], from + dayIndex))}</text>`;
     })
     .join('');
 
@@ -230,7 +253,7 @@ export function projectionChart({
             fill="${colour}" stroke="var(--surface)" stroke-width="2" />
     ${ticks}
 
-    <g class="chart-hits">${projectionBands({ points, dates, totalDays, x, y, height })}</g>
+    <g class="chart-hits">${projectionBands({ points, dates: dates?.slice(from), totalDays, x, y, height })}</g>
     <circle class="chart-cursor" r="5" fill="${colour}" stroke="var(--surface)"
             stroke-width="2" opacity="0" />
   </svg>`;
@@ -262,7 +285,7 @@ function projectionBands({ points, dates, totalDays, x, y, height }) {
  * One transparent full-height band per day with data, carrying that day's
  * figures so the tooltip is a lookup rather than a re-derivation.
  */
-function hitBands({ points, dates, totalDays, x, y, height }) {
+function hitBands({ points, dates, totalDays, x, y, height, offset = 0 }) {
   const slot = (x(1) - x(0)) || 8;
 
   return points
@@ -276,8 +299,11 @@ function hitBands({ points, dates, totalDays, x, y, height }) {
 
       // Projections both come from the same pace arithmetic the stats use:
       // running total over days elapsed, carried to the end of the month.
-      const projection = (total / (index + 1)) * totalDays;
-      const before = index > 0 ? (previous / index) * totalDays : null;
+      // Days elapsed, counted from 1 September rather than from the first
+      // reading — a series that starts on the 12th has 12 days behind it.
+      const elapsed = offset + index + 1;
+      const projection = (total / elapsed) * totalDays;
+      const before = index > 0 ? (previous / (elapsed - 1)) * totalDays : null;
       const shift = before ? ((projection - before) / before) * 100 : null;
 
       return `<rect x="${(x(index) - slot / 2).toFixed(1)}" y="0"
@@ -296,11 +322,11 @@ function hitBands({ points, dates, totalDays, x, y, height }) {
 }
 
 /** One chart card: heading, latest figure, the plot, its tooltip and note. */
-function panel({ title, latest, svg, note, wide }) {
+function panel({ title, latest, svg, note, wide, format = formatNumber }) {
   return `<div class="chart-block${wide ? ' wide' : ''}">
     <div class="chart-head">
       <span class="chart-title">${escapeHtml(title)}</span>
-      <strong class="chart-latest">${formatNumber(latest)}</strong>
+      <strong class="chart-latest">${escapeHtml(format(latest))}</strong>
     </div>
     ${svg}
     <div class="chart-tip" hidden></div>
@@ -329,6 +355,8 @@ export function chartBlock({
   label,
   note,
   subject,
+  /** How to render a figure — money charts need dollars, not bare counts. */
+  format = formatNumber,
   wide = false,
 }) {
   const points = (values ?? []).filter((value) => Number.isFinite(value));
@@ -340,6 +368,7 @@ export function chartBlock({
   const cumulative = panel({
     title,
     latest: points.at(-1) ?? 0,
+    format,
     svg: cumulativeChart({ values, dates, totalDays, target, colour, label, ...size }),
     note,
     wide,
@@ -349,7 +378,7 @@ export function chartBlock({
   // just that day times thirty. Below two days there is nothing to show.
   if (points.length < 2) return `<div class="chart-deck is-single">${cumulative}</div>`;
 
-  const forecast = projectionSeries(values, totalDays);
+  const forecast = projectionSeries(values, totalDays).filter((value) => Number.isFinite(value));
   const finish = forecast.at(-1);
 
   // The swing across the whole line, rather than a comparison against the first
@@ -361,11 +390,12 @@ export function chartBlock({
   const projected = panel({
     title: 'Projected finish',
     latest: finish,
+    format,
     svg: projectionChart({ values, dates, totalDays, target, colour, ...size,
-      label: `Projected end-of-September total for ${subject ?? 'this line'} as it stood on each day, now ${formatNumber(finish)}`,
+      label: `Projected end-of-September total for ${subject ?? 'this line'} as it stood on each day, now ${format(finish)}`,
     }),
-    note: `Where 30 September was heading, read fresh each day — between ${formatNumber(low)} and ${formatNumber(high)} so far.${
-      target ? ` Target is ${formatNumber(target)}.` : ''
+    note: `Where 30 September was heading, read fresh each day — between ${format(low)} and ${format(high)} so far.${
+      target ? ` Target is ${format(target)}.` : ''
     }`,
     wide,
   });
@@ -406,9 +436,7 @@ export function initChartTooltips() {
     if (!tip || !svg) return;
 
     const { kind, date, steps, added, projection, moved, shift } = band.dataset;
-    const when = date
-      ? new Date(`${date}T00:00:00`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
-      : '';
+    const when = date ? shortDate(date, 0) : '';
 
     if (kind === 'projection') {
       // The forecast chart's subject is the forecast itself, so it leads with
@@ -506,5 +534,49 @@ export function initChartTooltips() {
     if (event.pointerType !== 'mouse') return;
     const block = event.target.closest?.('.chart-block');
     if (block && !block.contains(event.relatedTarget)) hide(block);
+  });
+}
+
+/**
+ * The fundraising deck: the same two panels, in dollars.
+ *
+ * Returns nothing until there are two days to draw, which is the honest answer
+ * for a record that only began when this site started keeping one. Steptember
+ * serves a dated activity report for steps and nothing equivalent for money —
+ * the donations on a team page carry an amount and a donor but no date — so
+ * there is no earlier history to recover and the note says as much rather than
+ * letting a line that starts mid-month imply a quiet first fortnight.
+ */
+export function moneyBlock({
+  values,
+  dates,
+  totalDays,
+  target,
+  colour,
+  subject,
+  currency,
+  startsOn,
+  wide = false,
+}) {
+  const known = (values ?? []).filter((value) => Number.isFinite(value));
+  if (known.length < 2) return '';
+
+  return chartBlock({
+    title: 'Money raised',
+    values,
+    dates,
+    totalDays,
+    target,
+    colour,
+    subject,
+    wide,
+    // Whole dollars on a chart. A projection is a computed float, so the exact
+    // figure would trail a stray "$1,047.5"; the cents-accurate total is on the
+    // stat tiles and the fundraising lane, where it belongs.
+    format: (value) => formatMoney(Math.round(value), currency),
+    label: `Money raised by ${subject ?? 'this line'} through September, currently ${formatMoney(known.at(-1), currency)}`,
+    note: startsOn
+      ? `Tracked from ${shortDate(startsOn, 0)} — Steptember publishes no dated donation history, so there is nothing earlier to show.`
+      : null,
   });
 }

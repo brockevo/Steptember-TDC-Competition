@@ -2038,3 +2038,65 @@ footer.site ul {
     transition: none;
   }
 }
+
+/* ------------------------------------------------- since you last looked --- */
+
+/* A returning viewer's summary. Sits above every view rather than inside one,
+   so it is seen whichever page the link landed on. */
+.digest {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: var(--r-mid);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow);
+}
+
+.digest-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.digest-body p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-secondary);
+}
+
+.digest-body p + p {
+  margin-top: 4px;
+}
+
+.digest-body strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.digest-head {
+  font-size: 11px !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-muted) !important;
+  margin-bottom: 6px !important;
+}
+
+.digest-close {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--sunk);
+  color: var(--ink-secondary);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.digest-close:hover {
+  color: var(--ink);
+}

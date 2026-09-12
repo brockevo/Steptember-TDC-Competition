@@ -3,8 +3,9 @@
 import { loadCompetition } from './data.js';
 import { initProfiles } from './member.js';
 import { accentFor, avatar, handleBrokenAvatars, initTabbarAutoHide, laneFor } from './ui.js';
-import { chartBlock, initChartTooltips } from './chart.js';
+import { chartBlock, moneyBlock, initChartTooltips } from './chart.js';
 import { initChartDecks } from './deck.js';
+import { initDigest } from './digest.js';
 import { buildInsights } from './insights.js';
 import { initRouter } from './router.js';
 import { initProfileView } from './profile.js';
@@ -314,6 +315,17 @@ function renderTeams(data) {
           note: `Dashed line is the pace to their combined ${formatNumber(team.stepTarget)} step target.`,
         })}
 
+        ${moneyBlock({
+          values: team.raisedCumulative,
+          dates: data.history.dates,
+          totalDays: data.clock.totalDays,
+          target: team.goal,
+          colour: `var(--team-${team.colour})`,
+          subject: team.name,
+          currency: competition.currency,
+          startsOn: data.money.startsOn,
+        })}
+
         <p class="roster-title">Team roster</p>
         <ul class="roster">
           ${[...team.members]
@@ -374,6 +386,17 @@ function renderOverallChart(data) {
       subject: `all ${totals.memberCount} steppers`,
       label: `Combined cumulative steps for all ${totals.memberCount} participants through September, currently ${formatNumber(totals.steps)} against a combined target of ${formatNumber(totals.stepTarget)}`,
       note: `Dashed line is the pace to everyone's combined ${formatNumber(totals.stepTarget)} step target.`,
+      wide: true,
+    })}
+    ${moneyBlock({
+      values: totals.raisedCumulative,
+      dates: data.history.dates,
+      totalDays: clock.totalDays,
+      target: totals.goal,
+      colour: 'var(--brand)',
+      subject: `all ${totals.memberCount} steppers`,
+      currency: data.competition.currency,
+      startsOn: data.money.startsOn,
       wide: true,
     })}
   </article>`;
@@ -530,6 +553,7 @@ async function start() {
     initProfileView(data);
 
     renderFooter(data);
+    initDigest(data);
     initProfiles(data);
     initTeams(data);
     initRouter();

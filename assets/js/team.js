@@ -8,7 +8,7 @@
  */
 
 import { avatar } from './ui.js';
-import { chartBlock } from './chart.js';
+import { chartBlock, moneyBlock } from './chart.js';
 import { panelFor, scopesFor, switcher, initSwitcher } from './scope.js';
 import {
   escapeHtml,
@@ -120,6 +120,17 @@ function buildTeam(team, data) {
       note: team.stepTarget
         ? `Dashed line is the pace to their combined ${formatNumber(team.stepTarget)} step target.`
         : null,
+    })}
+
+    ${moneyBlock({
+      values: team.raisedCumulative,
+      dates: data.history.dates,
+      totalDays: clock.totalDays,
+      target: team.goal,
+      colour: `var(--team-${team.colour})`,
+      subject: team.name,
+      currency: competition.currency,
+      startsOn: data.money.startsOn,
     })}
 
     <p class="roster-title">Team roster</p>
