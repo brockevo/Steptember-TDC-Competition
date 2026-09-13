@@ -15,10 +15,15 @@ Every participant is clickable — their profile shows daily average, progress a
 target, a projection for the end of the month, how many steps a day they need from here, their share
 of the team's total, and more. Team cards open a dialog of their own in the same way.
 
-Every chart is a deck of two, swapped by the buttons beneath it or by swiping across it: **So far**,
-the cumulative line, and **Projected finish** — where 30 September was heading as of each day, which
-rises and falls the way a price does rather than only ever climbing. Teams, individuals and the
-whole-field total all get both, for **steps and for money raised**.
+Every chart is one deck of up to three views, swapped by the buttons beneath it, by swiping across
+it, or with the arrow keys: **So far** (the cumulative step line), **Forecast** (where 30 September
+was heading as of each day, which rises and falls the way a price does rather than only ever
+climbing), and **Raised** (money over time). Teams, individuals and the whole-field total all get
+the same three.
+
+There is deliberately **no forecast for money**. Donations arrive in lumps, not at a pace: one large
+gift sends a straight-line projection somewhere meaningless, and unlike steps there is no reason to
+expect the next fortnight to resemble the last.
 
 Coming back after a while shows a short **"since you last looked"** summary — steps added, money
 raised, any change in your own placing. It is worked out in your browser from a baseline kept in
