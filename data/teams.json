@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-12T14:11:11.384Z",
+    "lastUpdated": "2026-09-13T00:17:34.778Z",
     "dataSource": "live"
   },
   "teams": [
@@ -165,7 +165,7 @@
           "name": "Emma Coggin",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
-          "steps": 161331,
+          "steps": 172500,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
