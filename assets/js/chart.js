@@ -335,15 +335,58 @@ function panel({ title, latest, svg, note, wide, format = formatNumber }) {
 }
 
 /**
- * The chart card — as a deck of two: what has happened, and where it is
- * heading.
+ * The deck's markup: N panels behind one row of tabs.
  *
- * Both are built from the one `values` series, so every place a chart already
+ * Built from a list rather than a fixed pair, so a line that also has money to
+ * show carries three views without a second deck beside it.
+ */
+function deck(panels) {
+  if (panels.length === 0) return '';
+  if (panels.length === 1) return `<div class="chart-deck is-single">${panels[0].html}</div>`;
+
+  return `<div class="chart-deck" data-deck>
+    <div class="deck-viewport">
+      <div class="deck-track" data-deck-track>
+        ${panels
+          .map(
+            (p, index) =>
+              `<div class="deck-slide" data-deck-slide="${index}"${index === 0 ? '' : ' aria-hidden="true"'}>${p.html}</div>`,
+          )
+          .join('')}
+      </div>
+    </div>
+    <div class="deck-nav" role="tablist" aria-label="Which view of this line to show">
+      ${panels
+        .map(
+          (p, index) =>
+            `<button type="button" class="deck-tab${index === 0 ? ' is-active' : ''}" role="tab"
+                     aria-selected="${index === 0}" tabindex="${index === 0 ? '0' : '-1'}"
+                     data-deck-to="${index}">${escapeHtml(p.tab)}</button>`,
+        )
+        .join('')}
+    </div>
+  </div>`;
+}
+
+/**
+ * The chart card — one deck, up to three views of the same subject: what has
+ * happened, where the steps are heading, and what has been raised.
+ *
+ * The first two are built from the one `values` series, so every place a chart
  * appears gains the forecast without its caller assembling a second set of
- * figures. Where there is nothing to forecast from, the deck collapses to the
- * single cumulative card it has always been.
+ * figures. Money is passed in when there is a fundraising series to show, and
+ * rides in this deck rather than a second one beside it — the two measures
+ * belong to the same team or person, so they are views of one thing, not two
+ * charts that happen to be adjacent.
+ *
+ * There is deliberately **no money forecast**. Donations arrive in lumps, not
+ * at a pace: one $200 gift on a Tuesday sends a straight-line projection
+ * somewhere meaningless, and unlike steps there is no reason to expect the
+ * next fortnight to resemble the last. A forecast that confident about a
+ * number nobody can pace is worse than no forecast.
  *
  * @param subject  who or what the line is about, for the forecast's label
+ * @param money    optional fundraising panel: { values, target, currency, startsOn }
  */
 export function chartBlock({
   title,
@@ -355,6 +398,7 @@ export function chartBlock({
   label,
   note,
   subject,
+  money,
   /** How to render a figure — money charts need dollars, not bare counts. */
   format = formatNumber,
   wide = false,
@@ -365,55 +409,77 @@ export function chartBlock({
   // on a desktop without flattening to a sliver on a phone.
   const size = wide ? { width: 900, height: 300 } : {};
 
-  const cumulative = panel({
-    title,
-    latest: points.at(-1) ?? 0,
-    format,
-    svg: cumulativeChart({ values, dates, totalDays, target, colour, label, ...size }),
-    note,
-    wide,
-  });
+  const panels = [
+    {
+      tab: 'So far',
+      html: panel({
+        title,
+        latest: points.at(-1) ?? 0,
+        format,
+        svg: cumulativeChart({ values, dates, totalDays, target, colour, label, ...size }),
+        note,
+        wide,
+      }),
+    },
+  ];
 
   // One reading is a dot, not a trend, and the forecast from a single day is
-  // just that day times thirty. Below two days there is nothing to show.
-  if (points.length < 2) return `<div class="chart-deck is-single">${cumulative}</div>`;
+  // just that day times thirty. Below two days there is nothing to forecast.
+  if (points.length >= 2) {
+    const forecast = projectionSeries(values, totalDays).filter((value) => Number.isFinite(value));
+    const finish = forecast.at(-1);
 
-  const forecast = projectionSeries(values, totalDays).filter((value) => Number.isFinite(value));
-  const finish = forecast.at(-1);
+    // The swing across the whole line, rather than a comparison against the
+    // first day: a forecast made from one day's steps is that day times thirty,
+    // which is the noisiest reading in the series and the worst thing to
+    // anchor to.
+    const low = Math.min(...forecast);
+    const high = Math.max(...forecast);
 
-  // The swing across the whole line, rather than a comparison against the first
-  // day: a forecast made from one day's steps is that day times thirty, which
-  // is the noisiest reading in the series and the worst thing to anchor to.
-  const low = Math.min(...forecast);
-  const high = Math.max(...forecast);
+    panels.push({
+      tab: 'Forecast',
+      html: panel({
+        title: 'Projected finish',
+        latest: finish,
+        format,
+        svg: projectionChart({ values, dates, totalDays, target, colour, ...size,
+          label: `Projected end-of-September total for ${subject ?? 'this line'} as it stood on each day, now ${format(finish)}`,
+        }),
+        note: `Where 30 September was heading, read fresh each day — between ${format(low)} and ${format(high)} so far.${
+          target ? ` Target is ${format(target)}.` : ''
+        }`,
+        wide,
+      }),
+    });
+  }
 
-  const projected = panel({
-    title: 'Projected finish',
-    latest: finish,
-    format,
-    svg: projectionChart({ values, dates, totalDays, target, colour, ...size,
-      label: `Projected end-of-September total for ${subject ?? 'this line'} as it stood on each day, now ${format(finish)}`,
-    }),
-    note: `Where 30 September was heading, read fresh each day — between ${format(low)} and ${format(high)} so far.${
-      target ? ` Target is ${format(target)}.` : ''
-    }`,
-    wide,
-  });
+  const raised = (money?.values ?? []).filter((value) => Number.isFinite(value));
+  if (raised.length >= 2) {
+    const asMoney = (value) => formatMoney(Math.round(value), money.currency);
+    panels.push({
+      tab: 'Raised',
+      html: panel({
+        title: 'Money raised',
+        latest: raised.at(-1),
+        format: asMoney,
+        svg: cumulativeChart({
+          values: money.values,
+          dates,
+          totalDays,
+          target: money.target,
+          colour,
+          label: `Money raised by ${subject ?? 'this line'} through September, currently ${asMoney(raised.at(-1))}`,
+          ...size,
+        }),
+        note: money.startsOn
+          ? `Tracked from ${shortDate(money.startsOn, 0)} — Steptember publishes no dated donation history, so there is nothing earlier to show.`
+          : null,
+        wide,
+      }),
+    });
+  }
 
-  return `<div class="chart-deck" data-deck>
-    <div class="deck-viewport">
-      <div class="deck-track" data-deck-track>
-        <div class="deck-slide" data-deck-slide="0">${cumulative}</div>
-        <div class="deck-slide" data-deck-slide="1" aria-hidden="true">${projected}</div>
-      </div>
-    </div>
-    <div class="deck-nav" role="tablist" aria-label="Which view of this line to show">
-      <button type="button" class="deck-tab is-active" role="tab"
-              aria-selected="true" tabindex="0" data-deck-to="0">So far</button>
-      <button type="button" class="deck-tab" role="tab"
-              aria-selected="false" tabindex="-1" data-deck-to="1">Projected finish</button>
-    </div>
-  </div>`;
+  return deck(panels);
 }
 
 /**
@@ -534,49 +600,5 @@ export function initChartTooltips() {
     if (event.pointerType !== 'mouse') return;
     const block = event.target.closest?.('.chart-block');
     if (block && !block.contains(event.relatedTarget)) hide(block);
-  });
-}
-
-/**
- * The fundraising deck: the same two panels, in dollars.
- *
- * Returns nothing until there are two days to draw, which is the honest answer
- * for a record that only began when this site started keeping one. Steptember
- * serves a dated activity report for steps and nothing equivalent for money —
- * the donations on a team page carry an amount and a donor but no date — so
- * there is no earlier history to recover and the note says as much rather than
- * letting a line that starts mid-month imply a quiet first fortnight.
- */
-export function moneyBlock({
-  values,
-  dates,
-  totalDays,
-  target,
-  colour,
-  subject,
-  currency,
-  startsOn,
-  wide = false,
-}) {
-  const known = (values ?? []).filter((value) => Number.isFinite(value));
-  if (known.length < 2) return '';
-
-  return chartBlock({
-    title: 'Money raised',
-    values,
-    dates,
-    totalDays,
-    target,
-    colour,
-    subject,
-    wide,
-    // Whole dollars on a chart. A projection is a computed float, so the exact
-    // figure would trail a stray "$1,047.5"; the cents-accurate total is on the
-    // stat tiles and the fundraising lane, where it belongs.
-    format: (value) => formatMoney(Math.round(value), currency),
-    label: `Money raised by ${subject ?? 'this line'} through September, currently ${formatMoney(known.at(-1), currency)}`,
-    note: startsOn
-      ? `Tracked from ${shortDate(startsOn, 0)} — Steptember publishes no dated donation history, so there is nothing earlier to show.`
-      : null,
   });
 }

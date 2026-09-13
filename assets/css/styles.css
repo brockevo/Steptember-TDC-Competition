@@ -2014,6 +2014,9 @@ footer.site ul {
   font: inherit;
   font-size: 12px;
   font-weight: 700;
+  /* Three tabs in a team card at 390px: without this the labels break across
+     two lines and the row grows a second storey. */
+  white-space: nowrap;
   padding: 6px 14px;
   border-radius: var(--r-pill);
   border: 1px solid transparent;
