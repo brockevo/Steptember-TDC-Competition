@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-14T20:15:03.381Z",
+  "updated": "2026-09-14T22:14:39.440Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -14,7 +14,7 @@
     },
     "findingourfooting": {
       "steps": {
-        "rank": 9,
+        "rank": 10,
         "of": 81,
         "previous": 9
       },
@@ -38,17 +38,10 @@
     }
   },
   "members": {
-    "chloeegle588721": {
-      "steps": {
-        "rank": 20,
-        "of": 473,
-        "previous": 20
-      }
-    },
     "dionnemarks": {
       "steps": {
-        "rank": 22,
-        "of": 473,
+        "rank": 21,
+        "of": 474,
         "previous": 22
       },
       "raised": {
@@ -59,15 +52,22 @@
     },
     "benwalker584307": {
       "steps": {
-        "rank": 24,
-        "of": 473,
+        "rank": 23,
+        "of": 474,
         "previous": 24
+      }
+    },
+    "chloeegle588721": {
+      "steps": {
+        "rank": 24,
+        "of": 474,
+        "previous": 20
       }
     },
     "emilypham596852": {
       "steps": {
-        "rank": 51,
-        "of": 473,
+        "rank": 55,
+        "of": 474,
         "previous": 51
       },
       "raised": {
@@ -78,22 +78,22 @@
     },
     "timtaylor597740": {
       "steps": {
-        "rank": 82,
-        "of": 473,
+        "rank": 83,
+        "of": 474,
         "previous": 82
       }
     },
     "emmacoggin": {
       "steps": {
-        "rank": 84,
-        "of": 473,
+        "rank": 85,
+        "of": 474,
         "previous": 84
       }
     },
     "AnnaHaynes": {
       "steps": {
-        "rank": 86,
-        "of": 473,
+        "rank": 88,
+        "of": 474,
         "previous": 86
       },
       "raised": {
@@ -104,29 +104,29 @@
     },
     "christophertansey": {
       "steps": {
-        "rank": 87,
-        "of": 473,
+        "rank": 89,
+        "of": 474,
         "previous": 87
       }
     },
     "becmatthew": {
       "steps": {
-        "rank": 91,
-        "of": 473,
+        "rank": 94,
+        "of": 474,
         "previous": 91
       }
     },
     "leannawang": {
       "steps": {
-        "rank": 92,
-        "of": 473,
+        "rank": 95,
+        "of": 474,
         "previous": 92
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 94,
-        "of": 473,
+        "rank": 97,
+        "of": 474,
         "previous": 94
       },
       "raised": {
@@ -138,7 +138,7 @@
     "shivikasharma596864": {
       "steps": {
         "rank": 148,
-        "of": 473,
+        "of": 474,
         "previous": 148
       },
       "raised": {
