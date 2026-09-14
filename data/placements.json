@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-14T18:15:36.638Z",
+  "updated": "2026-09-14T20:15:03.381Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -16,7 +16,7 @@
       "steps": {
         "rank": 9,
         "of": 81,
-        "previous": 8
+        "previous": 9
       },
       "raised": {
         "rank": 3,
