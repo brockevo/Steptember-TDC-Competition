@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-14T04:12:59.440Z",
+    "lastUpdated": "2026-09-14T06:17:45.580Z",
     "dataSource": "live"
   },
   "teams": [
@@ -132,7 +132,7 @@
           "name": "Bec Matthew",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/becmatthew",
-          "steps": 150185,
+          "steps": 193336,
           "stepTarget": 225000,
           "raised": 0,
           "fundraisingGoal": 100,
