@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-15T04:15:48.177Z",
+  "updated": "2026-09-15T06:18:36.892Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -38,16 +38,9 @@
     }
   },
   "members": {
-    "benwalker584307": {
-      "steps": {
-        "rank": 21,
-        "of": 477,
-        "previous": 21
-      }
-    },
     "dionnemarks": {
       "steps": {
-        "rank": 22,
+        "rank": 20,
         "of": 477,
         "previous": 22
       },
@@ -55,6 +48,13 @@
         "rank": 12,
         "of": 107,
         "previous": 12
+      }
+    },
+    "benwalker584307": {
+      "steps": {
+        "rank": 22,
+        "of": 477,
+        "previous": 21
       }
     },
     "chloeegle588721": {
@@ -80,28 +80,28 @@
       "steps": {
         "rank": 79,
         "of": 477,
-        "previous": 105
+        "previous": 79
       }
     },
     "timtaylor597740": {
       "steps": {
         "rank": 90,
         "of": 477,
-        "previous": 87
+        "previous": 90
       }
     },
     "emmacoggin": {
       "steps": {
         "rank": 95,
         "of": 477,
-        "previous": 92
+        "previous": 95
       }
     },
     "AnnaHaynes": {
       "steps": {
         "rank": 99,
         "of": 477,
-        "previous": 96
+        "previous": 99
       },
       "raised": {
         "rank": 48,
@@ -113,21 +113,21 @@
       "steps": {
         "rank": 101,
         "of": 477,
-        "previous": 98
+        "previous": 101
       }
     },
     "leannawang": {
       "steps": {
         "rank": 109,
         "of": 477,
-        "previous": 106
+        "previous": 109
       }
     },
     "brockevans595822": {
       "steps": {
         "rank": 111,
         "of": 477,
-        "previous": 108
+        "previous": 111
       },
       "raised": {
         "rank": 84,
@@ -137,9 +137,9 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 154,
+        "rank": 155,
         "of": 477,
-        "previous": 153
+        "previous": 154
       },
       "raised": {
         "rank": 103,
