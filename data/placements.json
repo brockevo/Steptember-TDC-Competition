@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-15T12:17:50.388Z",
+  "updated": "2026-09-15T14:15:28.378Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -9,7 +9,7 @@
       "steps": {
         "rank": 5,
         "of": 81,
-        "previous": 6
+        "previous": 5
       }
     },
     "findingourfooting": {
@@ -40,23 +40,23 @@
   "members": {
     "chloeegle588721": {
       "steps": {
-        "rank": 21,
+        "rank": 22,
         "of": 478,
-        "previous": 27
+        "previous": 21
       }
     },
     "benwalker584307": {
       "steps": {
-        "rank": 23,
+        "rank": 24,
         "of": 478,
-        "previous": 20
+        "previous": 23
       }
     },
     "dionnemarks": {
       "steps": {
-        "rank": 25,
+        "rank": 26,
         "of": 478,
-        "previous": 22
+        "previous": 25
       },
       "raised": {
         "rank": 12,
@@ -68,7 +68,7 @@
       "steps": {
         "rank": 52,
         "of": 478,
-        "previous": 51
+        "previous": 52
       },
       "raised": {
         "rank": 86,
@@ -76,11 +76,18 @@
         "previous": 86
       }
     },
+    "timtaylor597740": {
+      "steps": {
+        "rank": 76,
+        "of": 478,
+        "previous": 101
+      }
+    },
     "AnnaHaynes": {
       "steps": {
-        "rank": 77,
+        "rank": 78,
         "of": 478,
-        "previous": 105
+        "previous": 77
       },
       "raised": {
         "rank": 48,
@@ -88,46 +95,39 @@
         "previous": 48
       }
     },
+    "emmacoggin": {
+      "steps": {
+        "rank": 86,
+        "of": 478,
+        "previous": 106
+      }
+    },
     "becmatthew": {
       "steps": {
-        "rank": 85,
+        "rank": 87,
         "of": 478,
-        "previous": 81
+        "previous": 85
       }
     },
     "leannawang": {
       "steps": {
-        "rank": 95,
+        "rank": 98,
         "of": 478,
-        "previous": 111
+        "previous": 95
       }
     },
     "christophertansey": {
       "steps": {
-        "rank": 98,
-        "of": 478,
-        "previous": 93
-      }
-    },
-    "timtaylor597740": {
-      "steps": {
         "rank": 101,
         "of": 478,
-        "previous": 96
-      }
-    },
-    "emmacoggin": {
-      "steps": {
-        "rank": 106,
-        "of": 478,
-        "previous": 102
+        "previous": 98
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 115,
+        "rank": 104,
         "of": 478,
-        "previous": 113
+        "previous": 115
       },
       "raised": {
         "rank": 84,
@@ -137,9 +137,9 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 121,
+        "rank": 122,
         "of": 478,
-        "previous": 135
+        "previous": 121
       },
       "raised": {
         "rank": 103,
