@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-15T02:16:27.246Z",
+  "updated": "2026-09-15T04:15:48.177Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -61,14 +61,14 @@
       "steps": {
         "rank": 26,
         "of": 477,
-        "previous": 25
+        "previous": 26
       }
     },
     "emilypham596852": {
       "steps": {
         "rank": 54,
         "of": 477,
-        "previous": 53
+        "previous": 54
       },
       "raised": {
         "rank": 86,
@@ -76,25 +76,32 @@
         "previous": 86
       }
     },
+    "becmatthew": {
+      "steps": {
+        "rank": 79,
+        "of": 477,
+        "previous": 105
+      }
+    },
     "timtaylor597740": {
       "steps": {
-        "rank": 87,
+        "rank": 90,
         "of": 477,
-        "previous": 86
+        "previous": 87
       }
     },
     "emmacoggin": {
       "steps": {
-        "rank": 92,
+        "rank": 95,
         "of": 477,
-        "previous": 91
+        "previous": 92
       }
     },
     "AnnaHaynes": {
       "steps": {
-        "rank": 96,
+        "rank": 99,
         "of": 477,
-        "previous": 93
+        "previous": 96
       },
       "raised": {
         "rank": 48,
@@ -104,30 +111,23 @@
     },
     "christophertansey": {
       "steps": {
-        "rank": 98,
+        "rank": 101,
         "of": 477,
-        "previous": 95
-      }
-    },
-    "becmatthew": {
-      "steps": {
-        "rank": 105,
-        "of": 477,
-        "previous": 103
+        "previous": 98
       }
     },
     "leannawang": {
       "steps": {
-        "rank": 106,
+        "rank": 109,
         "of": 477,
-        "previous": 104
+        "previous": 106
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 108,
+        "rank": 111,
         "of": 477,
-        "previous": 106
+        "previous": 108
       },
       "raised": {
         "rank": 84,
@@ -137,7 +137,7 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 153,
+        "rank": 154,
         "of": 477,
         "previous": 153
       },
