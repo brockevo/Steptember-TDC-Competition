@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-15T16:14:45.268Z",
+  "updated": "2026-09-15T18:15:25.313Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -113,21 +113,21 @@
       "steps": {
         "rank": 99,
         "of": 478,
-        "previous": 98
+        "previous": 99
       }
     },
     "christophertansey": {
       "steps": {
         "rank": 102,
         "of": 478,
-        "previous": 101
+        "previous": 102
       }
     },
     "brockevans595822": {
       "steps": {
         "rank": 105,
         "of": 478,
-        "previous": 104
+        "previous": 105
       },
       "raised": {
         "rank": 84,
