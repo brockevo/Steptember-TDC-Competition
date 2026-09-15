@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-15T20:15:17.297Z",
+  "updated": "2026-09-15T22:14:20.825Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -38,23 +38,9 @@
     }
   },
   "members": {
-    "chloeegle588721": {
-      "steps": {
-        "rank": 22,
-        "of": 478,
-        "previous": 22
-      }
-    },
-    "benwalker584307": {
-      "steps": {
-        "rank": 24,
-        "of": 478,
-        "previous": 24
-      }
-    },
     "dionnemarks": {
       "steps": {
-        "rank": 26,
+        "rank": 22,
         "of": 478,
         "previous": 26
       },
@@ -64,9 +50,23 @@
         "previous": 12
       }
     },
+    "chloeegle588721": {
+      "steps": {
+        "rank": 23,
+        "of": 478,
+        "previous": 22
+      }
+    },
+    "benwalker584307": {
+      "steps": {
+        "rank": 25,
+        "of": 478,
+        "previous": 24
+      }
+    },
     "emilypham596852": {
       "steps": {
-        "rank": 52,
+        "rank": 53,
         "of": 478,
         "previous": 52
       },
@@ -97,37 +97,37 @@
     },
     "emmacoggin": {
       "steps": {
-        "rank": 86,
+        "rank": 87,
         "of": 478,
         "previous": 86
       }
     },
     "becmatthew": {
       "steps": {
-        "rank": 87,
+        "rank": 88,
         "of": 478,
         "previous": 87
       }
     },
     "leannawang": {
       "steps": {
-        "rank": 100,
+        "rank": 101,
         "of": 478,
-        "previous": 99
+        "previous": 100
       }
     },
     "christophertansey": {
       "steps": {
-        "rank": 103,
+        "rank": 105,
         "of": 478,
-        "previous": 102
+        "previous": 103
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 106,
+        "rank": 108,
         "of": 478,
-        "previous": 105
+        "previous": 106
       },
       "raised": {
         "rank": 84,
@@ -137,9 +137,9 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 123,
+        "rank": 125,
         "of": 478,
-        "previous": 122
+        "previous": 123
       },
       "raised": {
         "rank": 103,
