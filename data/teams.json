@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-15T22:12:14.556Z",
+    "lastUpdated": "2026-09-16T02:12:25.052Z",
     "dataSource": "live"
   },
   "teams": [
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 290151,
+          "steps": 302315,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
