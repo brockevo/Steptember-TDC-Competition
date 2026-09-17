@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-17T00:16:05.703Z",
+    "lastUpdated": "2026-09-17T04:13:04.304Z",
     "dataSource": "live"
   },
   "teams": [
@@ -33,7 +33,7 @@
           "name": "Christopher Tansey",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/christophertansey",
-          "steps": 211366,
+          "steps": 223365,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -69,7 +69,7 @@
       "name": "Finding Our Footing",
       "colour": 2,
       "url": "https://www.steptember.org.au/fundraisers/findingourfooting",
-      "raised": 419,
+      "raised": 488,
       "goal": 2000,
       "members": [
         {
@@ -90,9 +90,9 @@
           "url": "https://www.steptember.org.au/fundraisers/dionnemarks",
           "steps": 319937,
           "stepTarget": 390000,
-          "raised": 276,
+          "raised": 345,
           "fundraisingGoal": 350,
-          "photo": null
+          "photo": "https://d1ycj7j4cqq4r8.cloudfront.net/1daf315ff6e5e4ef25bf39f0a534c8b5.jpg"
         },
         {
           "id": "emilypham596852",
