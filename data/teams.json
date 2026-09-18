@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-18T12:15:26.491Z",
+    "lastUpdated": "2026-09-18T14:12:22.324Z",
     "dataSource": "live"
   },
   "teams": [
@@ -55,7 +55,7 @@
           "name": "Tim Taylor",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/timtaylor597740",
-          "steps": 241638,
+          "steps": 253422,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
@@ -165,7 +165,7 @@
           "name": "Emma Coggin",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
-          "steps": 233532,
+          "steps": 260025,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
