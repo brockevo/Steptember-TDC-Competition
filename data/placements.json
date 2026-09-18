@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-18T20:14:07.075Z",
+  "updated": "2026-09-18T22:14:00.511Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -40,14 +40,14 @@
   "members": {
     "chloeegle588721": {
       "steps": {
-        "rank": 17,
+        "rank": 18,
         "of": 483,
         "previous": 17
       }
     },
     "dionnemarks": {
       "steps": {
-        "rank": 19,
+        "rank": 20,
         "of": 483,
         "previous": 19
       },
@@ -97,7 +97,7 @@
     },
     "timtaylor597740": {
       "steps": {
-        "rank": 82,
+        "rank": 83,
         "of": 483,
         "previous": 82
       }
@@ -116,9 +116,21 @@
         "previous": 107
       }
     },
+    "shivikasharma596864": {
+      "steps": {
+        "rank": 111,
+        "of": 483,
+        "previous": 133
+      },
+      "raised": {
+        "rank": 106,
+        "of": 111,
+        "previous": 106
+      }
+    },
     "brockevans595822": {
       "steps": {
-        "rank": 119,
+        "rank": 120,
         "of": 483,
         "previous": 119
       },
@@ -128,23 +140,11 @@
         "previous": 86
       }
     },
-    "shivikasharma596864": {
-      "steps": {
-        "rank": 133,
-        "of": 483,
-        "previous": 132
-      },
-      "raised": {
-        "rank": 106,
-        "of": 111,
-        "previous": 106
-      }
-    },
     "becmatthew": {
       "steps": {
-        "rank": 144,
+        "rank": 145,
         "of": 483,
-        "previous": 143
+        "previous": 144
       }
     }
   }
