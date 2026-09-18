@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-18T18:15:40.022Z",
+  "updated": "2026-09-18T20:14:07.075Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -99,14 +99,14 @@
       "steps": {
         "rank": 82,
         "of": 483,
-        "previous": 81
+        "previous": 82
       }
     },
     "christophertansey": {
       "steps": {
         "rank": 99,
         "of": 483,
-        "previous": 98
+        "previous": 99
       }
     },
     "leannawang": {
@@ -130,7 +130,7 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 132,
+        "rank": 133,
         "of": 483,
         "previous": 132
       },
@@ -142,7 +142,7 @@
     },
     "becmatthew": {
       "steps": {
-        "rank": 143,
+        "rank": 144,
         "of": 483,
         "previous": 143
       }
