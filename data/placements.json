@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-18T06:18:10.405Z",
+  "updated": "2026-09-18T08:14:57.493Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -40,9 +40,9 @@
   "members": {
     "dionnemarks": {
       "steps": {
-        "rank": 18,
+        "rank": 19,
         "of": 482,
-        "previous": 20
+        "previous": 18
       },
       "raised": {
         "rank": 6,
@@ -68,7 +68,7 @@
       "steps": {
         "rank": 55,
         "of": 482,
-        "previous": 58
+        "previous": 55
       },
       "raised": {
         "rank": 88,
@@ -83,7 +83,7 @@
         "previous": 84
       },
       "raised": {
-        "rank": 48,
+        "rank": 49,
         "of": 110,
         "previous": 48
       }
@@ -104,7 +104,7 @@
     },
     "emmacoggin": {
       "steps": {
-        "rank": 101,
+        "rank": 102,
         "of": 482,
         "previous": 101
       }
@@ -142,7 +142,7 @@
     },
     "becmatthew": {
       "steps": {
-        "rank": 130,
+        "rank": 131,
         "of": 482,
         "previous": 130
       }
