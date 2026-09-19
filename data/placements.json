@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-19T00:18:41.825Z",
+  "updated": "2026-09-19T02:14:17.191Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -26,7 +26,7 @@
     },
     "walkoholics": {
       "steps": {
-        "rank": 13,
+        "rank": 12,
         "of": 81,
         "previous": 13
       },
@@ -68,12 +68,12 @@
       "steps": {
         "rank": 60,
         "of": 483,
-        "previous": 59
+        "previous": 60
       },
       "raised": {
         "rank": 89,
         "of": 111,
-        "previous": 88
+        "previous": 89
       }
     },
     "AnnaHaynes": {
@@ -85,7 +85,7 @@
       "raised": {
         "rank": 50,
         "of": 111,
-        "previous": 49
+        "previous": 50
       }
     },
     "emmacoggin": {
@@ -95,56 +95,56 @@
         "previous": 75
       }
     },
-    "timtaylor597740": {
+    "christophertansey": {
       "steps": {
         "rank": 83,
         "of": 483,
-        "previous": 83
+        "previous": 100
       }
     },
-    "christophertansey": {
+    "timtaylor597740": {
       "steps": {
-        "rank": 100,
+        "rank": 85,
         "of": 483,
-        "previous": 99
+        "previous": 83
       }
     },
     "leannawang": {
       "steps": {
         "rank": 109,
         "of": 483,
-        "previous": 107
+        "previous": 109
       }
     },
     "shivikasharma596864": {
       "steps": {
         "rank": 113,
         "of": 483,
-        "previous": 111
+        "previous": 113
       },
       "raised": {
         "rank": 9,
         "of": 111,
-        "previous": 106
+        "previous": 9
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 121,
+        "rank": 122,
         "of": 483,
-        "previous": 120
+        "previous": 121
       },
       "raised": {
         "rank": 87,
         "of": 111,
-        "previous": 86
+        "previous": 87
       }
     },
     "becmatthew": {
       "steps": {
-        "rank": 147,
+        "rank": 148,
         "of": 483,
-        "previous": 145
+        "previous": 147
       }
     }
   }
