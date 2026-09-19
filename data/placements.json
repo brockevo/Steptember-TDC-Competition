@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-19T18:15:53.222Z",
+  "updated": "2026-09-19T20:14:09.007Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -42,14 +42,14 @@
       "steps": {
         "rank": 14,
         "of": 484,
-        "previous": 13
+        "previous": 14
       }
     },
     "dionnemarks": {
       "steps": {
         "rank": 15,
         "of": 484,
-        "previous": 14
+        "previous": 15
       },
       "raised": {
         "rank": 6,
@@ -118,7 +118,7 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 126,
+        "rank": 128,
         "of": 484,
         "previous": 126
       },
