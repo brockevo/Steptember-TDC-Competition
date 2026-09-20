@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-20T02:14:25.254Z",
+  "updated": "2026-09-20T04:14:28.354Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -40,7 +40,7 @@
   "members": {
     "chloeegle588721": {
       "steps": {
-        "rank": 14,
+        "rank": 15,
         "of": 484,
         "previous": 14
       }
@@ -49,7 +49,7 @@
       "steps": {
         "rank": 16,
         "of": 484,
-        "previous": 15
+        "previous": 16
       },
       "raised": {
         "rank": 6,
@@ -59,16 +59,16 @@
     },
     "benwalker584307": {
       "steps": {
-        "rank": 39,
+        "rank": 41,
         "of": 484,
-        "previous": 38
+        "previous": 39
       }
     },
     "emilypham596852": {
       "steps": {
-        "rank": 56,
+        "rank": 57,
         "of": 484,
-        "previous": 53
+        "previous": 56
       },
       "raised": {
         "rank": 90,
@@ -78,7 +78,7 @@
     },
     "AnnaHaynes": {
       "steps": {
-        "rank": 72,
+        "rank": 73,
         "of": 484,
         "previous": 72
       },
@@ -90,35 +90,35 @@
     },
     "emmacoggin": {
       "steps": {
-        "rank": 75,
+        "rank": 76,
         "of": 484,
         "previous": 75
       }
     },
     "christophertansey": {
       "steps": {
-        "rank": 80,
+        "rank": 81,
         "of": 484,
-        "previous": 97
+        "previous": 80
       }
     },
     "timtaylor597740": {
       "steps": {
-        "rank": 84,
+        "rank": 85,
         "of": 484,
-        "previous": 83
+        "previous": 84
       }
     },
     "leannawang": {
       "steps": {
-        "rank": 94,
+        "rank": 95,
         "of": 484,
-        "previous": 92
+        "previous": 94
       }
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 130,
+        "rank": 118,
         "of": 484,
         "previous": 130
       },
@@ -130,7 +130,7 @@
     },
     "brockevans595822": {
       "steps": {
-        "rank": 141,
+        "rank": 142,
         "of": 484,
         "previous": 141
       },
@@ -142,7 +142,7 @@
     },
     "becmatthew": {
       "steps": {
-        "rank": 160,
+        "rank": 161,
         "of": 484,
         "previous": 160
       }
