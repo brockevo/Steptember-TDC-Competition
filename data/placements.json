@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-22T04:14:12.188Z",
+  "updated": "2026-09-22T06:18:08.419Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -14,7 +14,7 @@
     },
     "findingourfooting": {
       "steps": {
-        "rank": 11,
+        "rank": 10,
         "of": 81,
         "previous": 11
       },
@@ -66,9 +66,9 @@
     },
     "emilypham596852": {
       "steps": {
-        "rank": 52,
+        "rank": 53,
         "of": 483,
-        "previous": 54
+        "previous": 52
       },
       "raised": {
         "rank": 90,
@@ -87,14 +87,14 @@
       "steps": {
         "rank": 92,
         "of": 483,
-        "previous": 91
+        "previous": 92
       }
     },
     "AnnaHaynes": {
       "steps": {
         "rank": 96,
         "of": 483,
-        "previous": 95
+        "previous": 96
       },
       "raised": {
         "rank": 51,
@@ -106,33 +106,21 @@
       "steps": {
         "rank": 97,
         "of": 483,
-        "previous": 103
+        "previous": 97
       }
     },
     "leannawang": {
       "steps": {
         "rank": 102,
         "of": 483,
-        "previous": 100
-      }
-    },
-    "shivikasharma596864": {
-      "steps": {
-        "rank": 132,
-        "of": 483,
-        "previous": 131
-      },
-      "raised": {
-        "rank": 11,
-        "of": 112,
-        "previous": 11
+        "previous": 102
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 194,
+        "rank": 131,
         "of": 483,
-        "previous": 193
+        "previous": 194
       },
       "raised": {
         "rank": 88,
@@ -140,11 +128,23 @@
         "previous": 88
       }
     },
+    "shivikasharma596864": {
+      "steps": {
+        "rank": 133,
+        "of": 483,
+        "previous": 132
+      },
+      "raised": {
+        "rank": 11,
+        "of": 112,
+        "previous": 11
+      }
+    },
     "becmatthew": {
       "steps": {
-        "rank": 211,
+        "rank": 212,
         "of": 483,
-        "previous": 210
+        "previous": 211
       }
     }
   }
