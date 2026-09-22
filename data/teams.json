@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-21T14:12:20.510Z",
+    "lastUpdated": "2026-09-22T00:16:28.615Z",
     "dataSource": "live"
   },
   "teams": [
@@ -110,7 +110,7 @@
           "name": "Shivika Sharma",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/shivikasharma596864",
-          "steps": 244828,
+          "steps": 253877,
           "stepTarget": 225000,
           "raised": 340,
           "fundraisingGoal": 100,
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 391133,
+          "steps": 407715,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
