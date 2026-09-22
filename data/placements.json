@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-22T14:14:25.844Z",
+  "updated": "2026-09-22T16:14:52.449Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -9,7 +9,7 @@
       "steps": {
         "rank": 7,
         "of": 81,
-        "previous": 8
+        "previous": 7
       }
     },
     "findingourfooting": {
@@ -68,7 +68,7 @@
       "steps": {
         "rank": 53,
         "of": 483,
-        "previous": 52
+        "previous": 53
       },
       "raised": {
         "rank": 90,
@@ -80,21 +80,21 @@
       "steps": {
         "rank": 72,
         "of": 483,
-        "previous": 85
+        "previous": 72
       }
     },
     "timtaylor597740": {
       "steps": {
         "rank": 79,
         "of": 483,
-        "previous": 98
+        "previous": 79
       }
     },
     "AnnaHaynes": {
       "steps": {
         "rank": 89,
         "of": 483,
-        "previous": 84
+        "previous": 89
       },
       "raised": {
         "rank": 51,
@@ -106,21 +106,21 @@
       "steps": {
         "rank": 98,
         "of": 483,
-        "previous": 95
+        "previous": 98
       }
     },
     "leannawang": {
       "steps": {
         "rank": 104,
         "of": 483,
-        "previous": 102
+        "previous": 104
       }
     },
     "brockevans595822": {
       "steps": {
         "rank": 126,
         "of": 483,
-        "previous": 139
+        "previous": 126
       },
       "raised": {
         "rank": 88,
@@ -130,9 +130,9 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 145,
+        "rank": 147,
         "of": 483,
-        "previous": 143
+        "previous": 145
       },
       "raised": {
         "rank": 11,
@@ -144,7 +144,7 @@
       "steps": {
         "rank": 218,
         "of": 483,
-        "previous": 217
+        "previous": 218
       }
     }
   }
