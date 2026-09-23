@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-23T16:15:29.173Z",
+  "updated": "2026-09-23T18:17:49.150Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -42,21 +42,21 @@
       "steps": {
         "rank": 16,
         "of": 483,
-        "previous": 15
+        "previous": 16
       }
     },
     "benwalker584307": {
       "steps": {
         "rank": 17,
         "of": 483,
-        "previous": 16
+        "previous": 17
       }
     },
     "dionnemarks": {
       "steps": {
         "rank": 23,
         "of": 483,
-        "previous": 22
+        "previous": 23
       },
       "raised": {
         "rank": 6,
@@ -78,14 +78,14 @@
     },
     "timtaylor597740": {
       "steps": {
-        "rank": 66,
+        "rank": 67,
         "of": 483,
         "previous": 66
       }
     },
     "emmacoggin": {
       "steps": {
-        "rank": 70,
+        "rank": 71,
         "of": 483,
         "previous": 70
       }
@@ -144,7 +144,7 @@
       "steps": {
         "rank": 234,
         "of": 483,
-        "previous": 233
+        "previous": 234
       }
     }
   }
