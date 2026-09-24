@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-24T16:15:33.632Z",
+  "updated": "2026-09-24T18:16:56.640Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -42,14 +42,14 @@
       "steps": {
         "rank": 18,
         "of": 484,
-        "previous": 17
+        "previous": 18
       }
     },
     "chloeegle588721": {
       "steps": {
         "rank": 20,
         "of": 484,
-        "previous": 19
+        "previous": 20
       }
     },
     "dionnemarks": {
@@ -125,7 +125,7 @@
       "steps": {
         "rank": 126,
         "of": 484,
-        "previous": 139
+        "previous": 126
       },
       "raised": {
         "rank": 104,
@@ -137,7 +137,7 @@
       "steps": {
         "rank": 142,
         "of": 484,
-        "previous": 141
+        "previous": 142
       },
       "raised": {
         "rank": 13,
