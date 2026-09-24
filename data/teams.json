@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-23T22:12:26.092Z",
+    "lastUpdated": "2026-09-24T00:16:24.989Z",
     "dataSource": "live"
   },
   "teams": [
@@ -14,7 +14,7 @@
       "name": "Walkoholics",
       "colour": 1,
       "url": "https://www.steptember.org.au/fundraisers/walkoholics",
-      "raised": 107,
+      "raised": 154,
       "goal": 2000,
       "members": [
         {
@@ -57,7 +57,7 @@
           "url": "https://www.steptember.org.au/fundraisers/timtaylor597740",
           "steps": 337851,
           "stepTarget": 300000,
-          "raised": 0,
+          "raised": 48,
           "fundraisingGoal": 100,
           "photo": null
         }
@@ -99,7 +99,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 356523,
+          "steps": 363842,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
