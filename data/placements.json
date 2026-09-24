@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-24T14:15:35.563Z",
+  "updated": "2026-09-24T16:15:33.632Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -40,14 +40,14 @@
   "members": {
     "benwalker584307": {
       "steps": {
-        "rank": 17,
+        "rank": 18,
         "of": 484,
         "previous": 17
       }
     },
     "chloeegle588721": {
       "steps": {
-        "rank": 19,
+        "rank": 20,
         "of": 484,
         "previous": 19
       }
@@ -56,7 +56,7 @@
       "steps": {
         "rank": 23,
         "of": 484,
-        "previous": 22
+        "previous": 23
       },
       "raised": {
         "rank": 8,
@@ -68,7 +68,7 @@
       "steps": {
         "rank": 50,
         "of": 484,
-        "previous": 48
+        "previous": 50
       },
       "raised": {
         "rank": 106,
@@ -80,7 +80,7 @@
       "steps": {
         "rank": 70,
         "of": 484,
-        "previous": 73
+        "previous": 70
       },
       "raised": {
         "rank": 94,
@@ -92,7 +92,7 @@
       "steps": {
         "rank": 74,
         "of": 484,
-        "previous": 75
+        "previous": 74
       }
     },
     "christophertansey": {
@@ -106,7 +106,7 @@
       "steps": {
         "rank": 94,
         "of": 484,
-        "previous": 93
+        "previous": 94
       },
       "raised": {
         "rank": 62,
@@ -118,14 +118,14 @@
       "steps": {
         "rank": 97,
         "of": 484,
-        "previous": 96
+        "previous": 97
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 139,
+        "rank": 126,
         "of": 484,
-        "previous": 136
+        "previous": 139
       },
       "raised": {
         "rank": 104,
@@ -135,9 +135,9 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 141,
+        "rank": 142,
         "of": 484,
-        "previous": 138
+        "previous": 141
       },
       "raised": {
         "rank": 13,
@@ -149,7 +149,7 @@
       "steps": {
         "rank": 243,
         "of": 484,
-        "previous": 242
+        "previous": 243
       }
     }
   }
