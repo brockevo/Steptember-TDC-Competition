@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-24T04:12:22.463Z",
+    "lastUpdated": "2026-09-24T06:15:51.256Z",
     "dataSource": "live"
   },
   "teams": [
@@ -88,7 +88,7 @@
           "name": "Dionne Marks",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/dionnemarks",
-          "steps": 445055,
+          "steps": 448743,
           "stepTarget": 390000,
           "raised": 401,
           "fundraisingGoal": 350,
