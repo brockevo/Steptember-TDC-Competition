@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-24T10:12:22.226Z",
+    "lastUpdated": "2026-09-24T12:15:18.434Z",
     "dataSource": "live"
   },
   "teams": [
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 451853,
+          "steps": 469329,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
@@ -154,7 +154,7 @@
           "name": "chloe egle",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/chloeegle588721",
-          "steps": 452425,
+          "steps": 466864,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
