@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-24T06:15:51.256Z",
+    "lastUpdated": "2026-09-24T08:13:54.198Z",
     "dataSource": "live"
   },
   "teams": [
@@ -33,7 +33,7 @@
           "name": "Christopher Tansey",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/christophertansey",
-          "steps": 312355,
+          "steps": 318354,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
