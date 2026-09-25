@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-25T16:15:53.487Z",
+  "updated": "2026-09-25T18:16:06.074Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -61,7 +61,7 @@
       "steps": {
         "rank": 23,
         "of": 485,
-        "previous": 22
+        "previous": 23
       },
       "raised": {
         "rank": 8,
@@ -109,7 +109,7 @@
       "steps": {
         "rank": 88,
         "of": 485,
-        "previous": 87
+        "previous": 88
       },
       "raised": {
         "rank": 62,
@@ -121,7 +121,7 @@
       "steps": {
         "rank": 93,
         "of": 485,
-        "previous": 92
+        "previous": 93
       }
     },
     "christophertansey": {
