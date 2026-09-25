@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-25T14:15:45.717Z",
+  "updated": "2026-09-25T16:15:53.487Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -21,7 +21,7 @@
       "steps": {
         "rank": 9,
         "of": 81,
-        "previous": 10
+        "previous": 9
       },
       "raised": {
         "rank": 1,
@@ -54,14 +54,14 @@
       "steps": {
         "rank": 18,
         "of": 485,
-        "previous": 23
+        "previous": 18
       }
     },
     "dionnemarks": {
       "steps": {
-        "rank": 22,
+        "rank": 23,
         "of": 485,
-        "previous": 20
+        "previous": 22
       },
       "raised": {
         "rank": 8,
@@ -73,7 +73,7 @@
       "steps": {
         "rank": 51,
         "of": 485,
-        "previous": 50
+        "previous": 51
       },
       "raised": {
         "rank": 107,
@@ -85,7 +85,7 @@
       "steps": {
         "rank": 68,
         "of": 485,
-        "previous": 82
+        "previous": 68
       },
       "raised": {
         "rank": 132,
@@ -97,7 +97,7 @@
       "steps": {
         "rank": 69,
         "of": 485,
-        "previous": 74
+        "previous": 69
       },
       "raised": {
         "rank": 94,
@@ -107,7 +107,7 @@
     },
     "AnnaHaynes": {
       "steps": {
-        "rank": 87,
+        "rank": 88,
         "of": 485,
         "previous": 87
       },
@@ -119,7 +119,7 @@
     },
     "leannawang": {
       "steps": {
-        "rank": 92,
+        "rank": 93,
         "of": 485,
         "previous": 92
       }
@@ -135,7 +135,7 @@
       "steps": {
         "rank": 124,
         "of": 485,
-        "previous": 133
+        "previous": 124
       },
       "raised": {
         "rank": 105,
@@ -147,7 +147,7 @@
       "steps": {
         "rank": 136,
         "of": 485,
-        "previous": 135
+        "previous": 136
       },
       "raised": {
         "rank": 13,
@@ -159,7 +159,7 @@
       "steps": {
         "rank": 254,
         "of": 485,
-        "previous": 252
+        "previous": 254
       }
     }
   }
