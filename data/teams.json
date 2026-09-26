@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-26T12:14:18.586Z",
+    "lastUpdated": "2026-09-26T14:11:53.372Z",
     "dataSource": "live"
   },
   "teams": [
@@ -55,7 +55,7 @@
           "name": "Tim Taylor",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/timtaylor597740",
-          "steps": 358645,
+          "steps": 375880,
           "stepTarget": 300000,
           "raised": 48,
           "fundraisingGoal": 100,
@@ -154,7 +154,7 @@
           "name": "chloe egle",
           "captain": true,
           "url": "https://www.steptember.org.au/fundraisers/chloeegle588721",
-          "steps": 482343,
+          "steps": 506090,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
