@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-25T22:11:40.353Z",
+    "lastUpdated": "2026-09-26T00:16:01.538Z",
     "dataSource": "live"
   },
   "teams": [
@@ -124,7 +124,7 @@
       "name": "Escalated to the Stepping Committee",
       "colour": 3,
       "url": "https://www.steptember.org.au/fundraisers/escalatedtothesteppingcommittee",
-      "raised": 20,
+      "raised": 99,
       "goal": 1000,
       "members": [
         {
@@ -167,7 +167,7 @@
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
           "steps": 359570,
           "stepTarget": 300000,
-          "raised": 20,
+          "raised": 99,
           "fundraisingGoal": 350,
           "photo": null
         }
