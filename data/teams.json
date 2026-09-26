@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-26T10:11:46.396Z",
+    "lastUpdated": "2026-09-26T12:14:18.586Z",
     "dataSource": "live"
   },
   "teams": [
@@ -99,7 +99,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 401618,
+          "steps": 402972,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
@@ -124,7 +124,7 @@
       "name": "Escalated to the Stepping Committee",
       "colour": 3,
       "url": "https://www.steptember.org.au/fundraisers/escalatedtothesteppingcommittee",
-      "raised": 290,
+      "raised": 314,
       "goal": 1000,
       "members": [
         {
@@ -165,9 +165,9 @@
           "name": "Emma Coggin",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
-          "steps": 359570,
+          "steps": 373737,
           "stepTarget": 300000,
-          "raised": 290,
+          "raised": 314,
           "fundraisingGoal": 350,
           "photo": null
         }
