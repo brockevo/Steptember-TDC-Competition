@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-27T00:17:38.060Z",
+    "lastUpdated": "2026-09-27T04:12:07.371Z",
     "dataSource": "live"
   },
   "teams": [
@@ -44,7 +44,7 @@
           "name": "Leanna Wang",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/leannawang",
-          "steps": 347231,
+          "steps": 356104,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -99,7 +99,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 402972,
+          "steps": 407115,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
