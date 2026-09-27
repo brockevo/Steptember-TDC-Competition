@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-26T22:13:51.246Z",
+  "updated": "2026-09-27T00:19:50.623Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -7,7 +7,7 @@
   "teams": {
     "escalatedtothesteppingcommittee": {
       "steps": {
-        "rank": 6,
+        "rank": 7,
         "of": 81,
         "previous": 6
       },
@@ -47,21 +47,21 @@
       "steps": {
         "rank": 18,
         "of": 486,
-        "previous": 17
+        "previous": 18
       }
     },
     "benwalker584307": {
       "steps": {
         "rank": 20,
         "of": 486,
-        "previous": 19
+        "previous": 20
       }
     },
     "dionnemarks": {
       "steps": {
-        "rank": 26,
+        "rank": 23,
         "of": 486,
-        "previous": 25
+        "previous": 26
       },
       "raised": {
         "rank": 8,
@@ -83,7 +83,7 @@
     },
     "timtaylor597740": {
       "steps": {
-        "rank": 63,
+        "rank": 65,
         "of": 486,
         "previous": 63
       },
@@ -95,7 +95,7 @@
     },
     "emmacoggin": {
       "steps": {
-        "rank": 66,
+        "rank": 67,
         "of": 486,
         "previous": 66
       },
@@ -107,7 +107,7 @@
     },
     "AnnaHaynes": {
       "steps": {
-        "rank": 86,
+        "rank": 89,
         "of": 486,
         "previous": 86
       },
@@ -119,7 +119,7 @@
     },
     "leannawang": {
       "steps": {
-        "rank": 88,
+        "rank": 91,
         "of": 486,
         "previous": 88
       }
@@ -128,12 +128,12 @@
       "steps": {
         "rank": 110,
         "of": 486,
-        "previous": 109
+        "previous": 110
       }
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 131,
+        "rank": 132,
         "of": 486,
         "previous": 131
       },
@@ -145,7 +145,7 @@
     },
     "brockevans595822": {
       "steps": {
-        "rank": 134,
+        "rank": 135,
         "of": 486,
         "previous": 134
       },
