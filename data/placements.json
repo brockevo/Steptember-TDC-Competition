@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-27T16:14:28.492Z",
+  "updated": "2026-09-27T18:16:12.574Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -73,7 +73,7 @@
       "steps": {
         "rank": 48,
         "of": 486,
-        "previous": 47
+        "previous": 48
       },
       "raised": {
         "rank": 109,
@@ -85,7 +85,7 @@
       "steps": {
         "rank": 66,
         "of": 486,
-        "previous": 64
+        "previous": 66
       },
       "raised": {
         "rank": 15,
@@ -97,7 +97,7 @@
       "steps": {
         "rank": 68,
         "of": 486,
-        "previous": 66
+        "previous": 68
       },
       "raised": {
         "rank": 96,
@@ -109,21 +109,21 @@
       "steps": {
         "rank": 86,
         "of": 486,
-        "previous": 85
+        "previous": 86
       }
     },
     "leannawang": {
       "steps": {
         "rank": 89,
         "of": 486,
-        "previous": 88
+        "previous": 89
       }
     },
     "AnnaHaynes": {
       "steps": {
         "rank": 100,
         "of": 486,
-        "previous": 98
+        "previous": 100
       },
       "raised": {
         "rank": 64,
@@ -147,7 +147,7 @@
       "steps": {
         "rank": 147,
         "of": 486,
-        "previous": 146
+        "previous": 147
       },
       "raised": {
         "rank": 107,
