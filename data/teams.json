@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-28T12:16:47.526Z",
+    "lastUpdated": "2026-09-28T14:14:55.225Z",
     "dataSource": "live"
   },
   "teams": [
@@ -124,7 +124,7 @@
       "name": "Escalated to the Stepping Committee",
       "colour": 3,
       "url": "https://www.steptember.org.au/fundraisers/escalatedtothesteppingcommittee",
-      "raised": 353,
+      "raised": 393,
       "goal": 1000,
       "members": [
         {
@@ -132,8 +132,8 @@
           "name": "Bec Matthew",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/becmatthew",
-          "steps": 325055,
-          "stepTarget": 225000,
+          "steps": 380800,
+          "stepTarget": 186210,
           "raised": 0,
           "fundraisingGoal": 100,
           "photo": null
@@ -165,9 +165,9 @@
           "name": "Emma Coggin",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
-          "steps": 383966,
+          "steps": 399157,
           "stepTarget": 300000,
-          "raised": 353,
+          "raised": 393,
           "fundraisingGoal": 350,
           "photo": null
         }
