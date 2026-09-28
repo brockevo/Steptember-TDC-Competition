@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-28T02:12:04.054Z",
+    "lastUpdated": "2026-09-28T04:13:12.534Z",
     "dataSource": "live"
   },
   "teams": [
@@ -99,7 +99,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 422138,
+          "steps": 423771,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
