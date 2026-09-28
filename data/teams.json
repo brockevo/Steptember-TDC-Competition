@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-28T08:15:34.116Z",
+    "lastUpdated": "2026-09-28T12:16:47.526Z",
     "dataSource": "live"
   },
   "teams": [
@@ -44,7 +44,7 @@
           "name": "Leanna Wang",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/leannawang",
-          "steps": 369042,
+          "steps": 373542,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 350,
@@ -99,7 +99,7 @@
           "name": "Emily Pham",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/emilypham596852",
-          "steps": 428923,
+          "steps": 430651,
           "stepTarget": 300000,
           "raised": 39,
           "fundraisingGoal": 255,
@@ -110,7 +110,7 @@
           "name": "Shivika Sharma",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/shivikasharma596864",
-          "steps": 314571,
+          "steps": 323146,
           "stepTarget": 225000,
           "raised": 340,
           "fundraisingGoal": 100,
@@ -124,7 +124,7 @@
       "name": "Escalated to the Stepping Committee",
       "colour": 3,
       "url": "https://www.steptember.org.au/fundraisers/escalatedtothesteppingcommittee",
-      "raised": 314,
+      "raised": 353,
       "goal": 1000,
       "members": [
         {
@@ -143,7 +143,7 @@
           "name": "ben walker",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/benwalker584307",
-          "steps": 549324,
+          "steps": 562951,
           "stepTarget": 300000,
           "raised": 0,
           "fundraisingGoal": 100,
@@ -167,7 +167,7 @@
           "url": "https://www.steptember.org.au/fundraisers/emmacoggin",
           "steps": 383966,
           "stepTarget": 300000,
-          "raised": 314,
+          "raised": 353,
           "fundraisingGoal": 350,
           "photo": null
         }
