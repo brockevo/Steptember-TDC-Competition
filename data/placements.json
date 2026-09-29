@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-29T08:17:37.861Z",
+  "updated": "2026-09-29T10:15:48.354Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -21,7 +21,7 @@
       "steps": {
         "rank": 9,
         "of": 81,
-        "previous": 8
+        "previous": 9
       },
       "raised": {
         "rank": 1,
@@ -31,7 +31,7 @@
     },
     "walkoholics": {
       "steps": {
-        "rank": 12,
+        "rank": 13,
         "of": 81,
         "previous": 12
       },
@@ -47,14 +47,14 @@
       "steps": {
         "rank": 14,
         "of": 488,
-        "previous": 13
+        "previous": 14
       }
     },
     "dionnemarks": {
       "steps": {
         "rank": 19,
         "of": 488,
-        "previous": 18
+        "previous": 19
       },
       "raised": {
         "rank": 9,
@@ -66,14 +66,14 @@
       "steps": {
         "rank": 21,
         "of": 488,
-        "previous": 20
+        "previous": 21
       }
     },
     "emilypham596852": {
       "steps": {
-        "rank": 59,
+        "rank": 57,
         "of": 488,
-        "previous": 58
+        "previous": 59
       },
       "raised": {
         "rank": 113,
@@ -107,23 +107,23 @@
     },
     "becmatthew": {
       "steps": {
-        "rank": 98,
+        "rank": 99,
         "of": 488,
-        "previous": 97
+        "previous": 98
       }
     },
     "leannawang": {
       "steps": {
-        "rank": 100,
+        "rank": 102,
         "of": 488,
-        "previous": 99
+        "previous": 100
       }
     },
     "AnnaHaynes": {
       "steps": {
-        "rank": 103,
+        "rank": 106,
         "of": 488,
-        "previous": 102
+        "previous": 103
       },
       "raised": {
         "rank": 65,
@@ -133,16 +133,16 @@
     },
     "christophertansey": {
       "steps": {
-        "rank": 110,
+        "rank": 113,
         "of": 488,
-        "previous": 108
+        "previous": 110
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 145,
+        "rank": 147,
         "of": 488,
-        "previous": 143
+        "previous": 145
       },
       "raised": {
         "rank": 111,
@@ -152,9 +152,9 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 155,
+        "rank": 156,
         "of": 488,
-        "previous": 152
+        "previous": 155
       },
       "raised": {
         "rank": 14,
