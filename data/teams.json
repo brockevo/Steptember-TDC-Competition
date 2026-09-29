@@ -5,7 +5,7 @@
     "startDate": "2026-09-01",
     "endDate": "2026-09-30",
     "currency": "AUD",
-    "lastUpdated": "2026-09-29T14:13:55.876Z",
+    "lastUpdated": "2026-09-29T20:13:36.165Z",
     "dataSource": "live"
   },
   "teams": [
@@ -22,7 +22,7 @@
           "name": "Anna Haynes",
           "captain": false,
           "url": "https://www.steptember.org.au/fundraisers/AnnaHaynes",
-          "steps": 376833,
+          "steps": 394110,
           "stepTarget": 300000,
           "raised": 107,
           "fundraisingGoal": 500,

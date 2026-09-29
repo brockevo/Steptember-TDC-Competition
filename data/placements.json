@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-29T18:17:52.325Z",
+  "updated": "2026-09-29T20:15:45.419Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -31,7 +31,7 @@
     },
     "walkoholics": {
       "steps": {
-        "rank": 14,
+        "rank": 12,
         "of": 81,
         "previous": 14
       },
@@ -71,7 +71,7 @@
     },
     "emilypham596852": {
       "steps": {
-        "rank": 59,
+        "rank": 60,
         "of": 488,
         "previous": 59
       },
@@ -112,16 +112,9 @@
         "previous": 90
       }
     },
-    "leannawang": {
-      "steps": {
-        "rank": 104,
-        "of": 488,
-        "previous": 104
-      }
-    },
     "AnnaHaynes": {
       "steps": {
-        "rank": 108,
+        "rank": 93,
         "of": 488,
         "previous": 108
       },
@@ -131,16 +124,23 @@
         "previous": 65
       }
     },
+    "leannawang": {
+      "steps": {
+        "rank": 106,
+        "of": 488,
+        "previous": 104
+      }
+    },
     "christophertansey": {
       "steps": {
         "rank": 117,
         "of": 488,
-        "previous": 116
+        "previous": 117
       }
     },
     "brockevans595822": {
       "steps": {
-        "rank": 150,
+        "rank": 155,
         "of": 488,
         "previous": 150
       },
@@ -152,7 +152,7 @@
     },
     "shivikasharma596864": {
       "steps": {
-        "rank": 163,
+        "rank": 164,
         "of": 488,
         "previous": 163
       },
