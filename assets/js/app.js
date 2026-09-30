@@ -96,12 +96,26 @@ function startCountdown(clock) {
 
   const pad = (value) => String(value).padStart(2, '0');
 
+  /*
+   * Declared up here, with `let`, precisely because `tick` clears it and runs
+   * once before the interval is ever created.
+   *
+   * This was a `const` below the first `tick()` call, which left it in the
+   * temporal dead zone during that call. It cost nothing for the whole of
+   * September — the only line touching `timer` sits in the "time's up" branch,
+   * which never ran while there was time left. The moment the campaign actually
+   * ended, the first synchronous tick took that branch, threw a ReferenceError,
+   * and took `renderHero` and the entire scoreboard down with it: no team
+   * cards, no boards, no ladders, just the error banner.
+   */
+  let timer;
+
   function tick() {
     const left = closesAt - Date.now();
 
     if (left <= 0) {
       output.textContent = 'Finished';
-      caption.textContent = 'Steptember is done';
+      if (caption) caption.textContent = 'Steptember is done';
       clearInterval(timer);
       return;
     }
@@ -114,7 +128,9 @@ function startCountdown(clock) {
   }
 
   tick();
-  const timer = setInterval(tick, 1000);
+  // Nothing left to count down to once it has closed, so don't leave a timer
+  // ticking over a finished campaign for as long as the tab stays open.
+  if (closesAt - Date.now() > 0) timer = setInterval(tick, 1000);
 }
 
 /* ------------------------------------------------------------ scoreboards -- */
