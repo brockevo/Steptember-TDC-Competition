@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-01T10:16:57.284Z",
+  "updated": "2026-10-01T12:20:29.710Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -45,14 +45,14 @@
   "members": {
     "benwalker584307": {
       "steps": {
-        "rank": 17,
+        "rank": 18,
         "of": 490,
         "previous": 17
       }
     },
     "dionnemarks": {
       "steps": {
-        "rank": 19,
+        "rank": 20,
         "of": 490,
         "previous": 19
       },
@@ -64,7 +64,7 @@
     },
     "chloeegle588721": {
       "steps": {
-        "rank": 26,
+        "rank": 27,
         "of": 490,
         "previous": 26
       }
@@ -121,7 +121,7 @@
       "steps": {
         "rank": 112,
         "of": 490,
-        "previous": 111
+        "previous": 112
       }
     },
     "leannawang": {
@@ -154,7 +154,7 @@
       "steps": {
         "rank": 160,
         "of": 490,
-        "previous": 159
+        "previous": 160
       },
       "raised": {
         "rank": 114,
