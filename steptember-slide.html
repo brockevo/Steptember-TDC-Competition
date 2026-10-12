@@ -32,6 +32,7 @@ h1{margin:0;font:800 68px/1.1 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .icard li{font-size:40px;font-weight:700;display:flex;align-items:center;gap:20px;text-align:left}
 .icard li i{width:28px;height:28px;border-radius:50%;flex:none}
 .c1{background:var(--t1)}.c2{background:var(--t2)}.c3{background:var(--t3)}
+.photo{width:470px;max-width:100%;border-radius:18px;margin-top:40px;display:block}
 .big{font-size:120px;font-weight:800;color:var(--navy);line-height:1;margin-top:40px;font-variant-numeric:tabular-nums}
 .big small{display:block;font-size:34px;font-weight:700;color:var(--grey);margin-top:10px}
 /* slide 2 */
@@ -41,11 +42,11 @@ h1{margin:0;font:800 68px/1.1 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .stat{text-align:center}
 .stat b{display:block;font-size:68px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums}
 .stat span{display:block;margin-top:6px;font-size:24px;font-weight:700;letter-spacing:.08em;color:var(--grey)}
-.res{display:grid;grid-template-columns:1.5fr 1fr;gap:36px;flex:1;min-height:0}
+.res{display:grid;grid-template-columns:1.5fr 1fr;grid-template-rows:minmax(0,1fr);gap:36px;flex:1;min-height:0}
 .panel{border:4px solid var(--navy);border-radius:34px;padding:26px 40px;display:flex;flex-direction:column}
 .panel h3{margin:0;font-size:38px;font-weight:800;color:#13813f}
 .panel p.k{margin:0;font-size:24px;color:var(--grey)}
-.podium{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:end;margin-top:16px}
+.podium{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:end;margin-top:16px}
 .pl{display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
 .pl .nm{font-size:30px;font-weight:800;text-align:center;line-height:1.15}
 .pl .st{font-size:28px;font-weight:700;color:var(--grey);margin:2px 0 4px;font-variant-numeric:tabular-nums}
@@ -54,8 +55,16 @@ h1{margin:0;font:800 68px/1.1 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .pl.p1 .blk{height:240px;background:var(--amber)}
 .pl.p2 .blk{height:170px;background:var(--lav)}
 .pl.p3 .blk{height:120px;background:var(--mint)}
-.side{display:grid;grid-template-rows:1fr 1fr;gap:28px}
-.award{border-radius:34px;padding:28px 40px;display:flex;flex-direction:column;justify-content:center}
+.side{display:grid;min-height:0;grid-template-rows:minmax(0,1.7fr) minmax(0,1fr);gap:28px}
+.tsteps{gap:0;justify-content:center;padding:18px 40px}
+.tbars{display:grid;gap:8px;margin-top:8px}
+.tbar{display:grid;grid-template-columns:1fr;gap:2px}
+.tbar .lab{font-size:22px;font-weight:700}
+.tbar .row{display:flex;align-items:center;gap:16px}
+.tbar i{display:block;height:26px;border-radius:6px}
+.tbar b{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.side>#awards{display:flex;min-height:0}
+.award{flex:1;border-radius:34px;padding:18px 40px;display:flex;flex-direction:column;justify-content:center}
 .award small{font-size:26px;font-weight:800;letter-spacing:.06em}
 .award strong{font-size:48px;font-weight:800;margin:6px 0 4px;line-height:1.1}
 .award span{font-size:28px}
@@ -75,10 +84,10 @@ h1{margin:0;font:800 68px/1.1 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
     <div class="band info">
       <section class="icard"><div class="badge" aria-hidden="true">🪜</div><h2>The Challenge</h2>
         <p>Take 300,000 individual steps in September</p>
-        <div class="big">300,000<small>steps each</small></div></section>
+        <img class="photo" src="assets/img/slide-challenge.jpg" alt="Two hikers walking a mountain trail" /></section>
       <section class="icard"><div class="badge" aria-hidden="true">🎯</div><h2>Why?</h2>
         <p>Raise money and awareness for children with cerebral palsy</p>
-        <div class="big">💜<small>for the Cerebral Palsy Alliance</small></div></section>
+        <img class="photo" src="assets/img/slide-why.jpg" alt="A child in a wheelchair hugging a family member" /></section>
       <section class="icard"><div class="badge" aria-hidden="true">👥</div><h2>3 Subteams</h2>
         <ul><li><i class="c1"></i>The Walkoholics</li><li><i class="c3"></i>Stepping Committee</li><li><i class="c2"></i>Finding Our Footing</li></ul>
         <div class="big">12<small>steppers</small></div></section>
@@ -91,7 +100,7 @@ h1{margin:0;font:800 68px/1.1 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
     <div class="mission"><h2>🎉 Mission accomplished! 🎉</h2><div class="stats" id="stats"></div></div>
     <div class="res">
       <section class="panel"><h3>🏆 Most steps</h3><p class="k">Top three steppers</p><div class="podium" id="podium"></div></section>
-      <div class="side" id="awards"></div>
+      <div class="side"><section class="panel tsteps"><h3>👟 Team steps</h3><div class="tbars" id="tbars"></div></section><div id="awards"></div></div>
     </div>
   </section>
 
@@ -131,9 +140,13 @@ document.getElementById('podium').innerHTML = [1, 0, 2].map((i) => {
 }).join('');
 
 document.getElementById('awards').innerHTML = [
-  ['a2', '🐢 FEWEST STEPS', 'Brock Evans', '347,451 steps · Finding Our Footing'],
   ['a3', '💰 TOP FUNDRAISER', 'Emma Coggin', '$470 raised · Escalated to the Stepping Committee']
 ].map(([c, k, n, t]) => `<div class="award ${c}"><small>${k}</small><strong>${esc(n)}</strong><span>${esc(t)}</span></div>`).join('');
+
+const tcol = { 'Walkoholics':'c1', 'Finding Our Footing':'c2', 'Escalated to the Stepping Committee':'c3' };
+const tsort = [...teams].sort((a, b) => b.steps - a.steps);
+document.getElementById('tbars').innerHTML = tsort.map((t) =>
+  `<div class="tbar"><div class="lab">${esc(t.name)}</div><div class="row"><i class="${tcol[t.name]}" style="width:${(t.steps / tsort[0].steps * 62).toFixed(1)}%"></i><b>${fmt(t.steps)}</b></div></div>`).join('');
 
 /* slides */
 const slides = [...document.querySelectorAll('.slide')];
