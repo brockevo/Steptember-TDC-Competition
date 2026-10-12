@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TDC Steptember Showdown Slide</title>
+<meta name="description" content="One-slide summary of the TDC Steptember results, matching the PowerPoint version." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%9F%3C/text%3E%3C/svg%3E" />
+<style>
+:root{
+  --bg:#2b2170; --card:#3d31a0; --ink:#101014; --lav:#c9c2f3; --amber:#f7b955; --mint:#a8e6cf;
+  --t1:#2a78d6; --t2:#eb6834; --t3:#1baf7a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0d0a26;overflow:hidden}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif}
+/* 1920x1080 stage, scaled to fit the window by the script below */
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;background:var(--bg);color:#fff;position:relative;padding:44px 86px 48px;display:flex;flex-direction:column;gap:22px}
+h1{margin:0;font:800 60px/1.1 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
+.sub{font-size:26px;color:var(--lav);margin-top:-8px}
+.info{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:22px}
+.icard{position:relative;background:#fff;color:var(--ink);border-radius:26px;padding:42px 28px 14px;text-align:center}
+.badge{position:absolute;left:50%;top:-32px;transform:translateX(-50%);width:68px;height:68px;border-radius:50%;background:var(--bg);border:4px solid #fff;display:grid;place-items:center;font-size:32px}
+.icard h2{margin:0;font-size:30px;font-weight:800;color:#13813f}
+.icard p{margin:4px 0 0;font-size:22px;font-weight:700;line-height:1.25}
+.icard ul{list-style:none;margin:6px 0 0;padding:0;text-align:left;display:inline-block}
+.icard li{font-size:22px;font-weight:700;line-height:1.35;display:flex;align-items:center;gap:12px}
+.icard li i{width:16px;height:16px;border-radius:50%}
+.mission{border:4px dashed #b47cff;border-radius:26px;background:rgba(255,255,255,.07);padding:10px 34px 12px}
+.mission h2{margin:0;text-align:center;font-size:30px;font-weight:800;color:var(--amber)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:10px;border-top:2px solid rgba(201,194,243,.35);padding-top:12px}
+.stat{text-align:center}
+.stat b{display:block;font-size:46px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:4px;font-size:20px;font-weight:700;letter-spacing:.08em;color:var(--lav)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:28px;flex:1;min-height:0}
+.awards,.mission,.info{flex:none}
+.chart{background:#fff;color:var(--ink);border-radius:26px;padding:22px 40px;display:flex;flex-direction:column}
+.chart h2{margin:0;font-size:30px;font-weight:800}
+.chart p{margin:0;font-size:20px;color:#55545f}
+.bars{flex:1;display:grid;align-content:center;gap:10px;margin-top:4px}
+.bar{display:grid;grid-template-columns:340px 1fr;align-items:center;gap:18px}
+.bar .lab{text-align:right;font-size:20px;line-height:1.15;white-space:nowrap}
+.bar .track{display:flex;align-items:center;gap:14px}
+.bar i{display:block;height:32px;width:0;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.bar b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.c1{background:var(--t1)}.c2{background:var(--t2)}.c3{background:var(--t3)}
+.awards{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.award{border-radius:26px;padding:16px 34px;color:var(--ink)}
+.award small{display:block;font-size:20px;font-weight:800;letter-spacing:.06em}
+.award strong{display:block;font-size:32px;font-weight:800;margin:2px 0}
+.award span{font-size:20px}
+.a1{background:var(--amber)}.a2{background:var(--lav)}.a3{background:var(--mint)}
+.hint{position:fixed;bottom:10px;right:14px;font:12px system-ui;color:#8b86b8}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1>TDC Canberra – Steptember Challenge</h1>
+  <div class="sub">Raising money for the Cerebral Palsy Alliance &nbsp;·&nbsp; September 2026</div>
+
+  <div class="info">
+    <section class="icard"><div class="badge" aria-hidden="true">🪜</div><h2>The Challenge</h2><p>Take 300,000 individual steps in September</p></section>
+    <section class="icard"><div class="badge" aria-hidden="true">🎯</div><h2>Why?</h2><p>Raise money and awareness for children with cerebral palsy</p></section>
+    <section class="icard"><div class="badge" aria-hidden="true">👥</div><h2>3 Subteams</h2>
+      <ul><li><i class="c1"></i>The Walkoholics</li><li><i class="c3"></i>Stepping Committee</li><li><i class="c2"></i>Finding Our Footing</li></ul></section>
+  </div>
+
+  <section class="mission"><h2>🎉 Mission accomplished! 🎉</h2><div class="stats" id="stats"></div></section>
+
+  <div class="charts">
+    <section class="chart" aria-label="Most steps">
+      <h2>Most steps</h2><p>Team total across four steppers</p>
+      <div class="bars" id="bars-steps"></div>
+    </section>
+    <section class="chart" aria-label="Most raised">
+      <h2>Most raised</h2><p>Team fundraising pages (AUD)</p>
+      <div class="bars" id="bars-money"></div>
+    </section>
+  </div>
+
+  <div class="awards" id="awards"></div>
+</main>
+<div class="hint">Press F for full screen</div>
+
+<script>
+/* Snapshot of data/teams.json as at 11 Oct 2026 (same figures as the PowerPoint) */
+const teams = [
+  { name:'Walkoholics', steps:1621952, raised:154, c:1 },
+  { name:'Finding Our Footing', steps:1752951, raised:866, c:2 },
+  { name:'Escalated to the Stepping Committee', steps:2010568, raised:470, c:3 }
+];
+const fmt = (n) => n.toLocaleString('en-AU');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const totalSteps = teams.reduce((a, t) => a + t.steps, 0);
+const totalRaised = teams.reduce((a, t) => a + t.raised, 0);
+
+document.getElementById('stats').innerHTML = [
+  [fmt(totalSteps), 'TOTAL STEPS'],
+  ['$' + fmt(totalRaised), 'TOTAL RAISED (AUD)'],
+  [fmt(Math.round(totalSteps * 0.00075)) + ' km', 'DISTANCE WALKED'],
+  ['12', 'STEPPERS IN 3 TEAMS']
+].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+
+function bars(id, key, f) {
+  const sorted = [...teams].sort((a, b) => b[key] - a[key]);
+  const max = sorted[0][key];
+  document.getElementById(id).innerHTML = sorted.map((t) =>
+    `<div class="bar"><div class="lab">${esc(t.name)}</div>
+     <div class="track"><i class="c${t.c}" data-w="${(t[key] / max * 78).toFixed(1)}"></i><b>${f(t[key])}</b></div></div>`).join('');
+}
+bars('bars-steps', 'steps', fmt);
+bars('bars-money', 'raised', (n) => '$' + fmt(n));
+setTimeout(() => document.querySelectorAll('.bar i').forEach((el) => { el.style.width = el.dataset.w + '%'; }), 100);
+
+document.getElementById('awards').innerHTML = [
+  ['a1', 'STEP CHAMPION', 'ben walker  ·  601,802 steps', 'Escalated to the Stepping Committee'],
+  ['a2', 'FEWEST STEPS', 'Brock Evans  ·  347,451 steps', 'Finding Our Footing'],
+  ['a3', 'TOP FUNDRAISER', 'Emma Coggin  ·  $470 raised', 'Escalated to the Stepping Committee']
+].map(([c, k, n, t]) => `<div class="award ${c}"><small>${k}</small><strong>${esc(n)}</strong><span>${esc(t)}</span></div>`).join('');
+
+/* scale the 1920x1080 stage to fit the window */
+const stage = document.getElementById('stage');
+function fit() { stage.style.transform = `translate(-50%, -50%) scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`; }
+addEventListener('resize', fit); fit();
+addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() !== 'f') return;
+  if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+});
+</script>
+</body>
+</html>
