@@ -1,40 +1,25 @@
 {
-  "updated": "2026-10-09T05:03:38.179Z",
+  "updated": "2026-10-26T09:52:23.102Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
   },
   "teams": {
-    "escalatedtothesteppingcommittee": {
-      "steps": {
-        "rank": 7,
-        "of": 81,
-        "previous": 7
-      },
-      "raised": {
-        "rank": 6,
-        "of": 55,
-        "previous": 6
-      }
-    },
     "findingourfooting": {
-      "steps": {
-        "rank": 10,
-        "of": 81,
-        "previous": 10
-      },
       "raised": {
         "rank": 1,
         "of": 55,
         "previous": 1
       }
     },
+    "escalatedtothesteppingcommittee": {
+      "raised": {
+        "rank": 6,
+        "of": 55,
+        "previous": 6
+      }
+    },
     "walkoholics": {
-      "steps": {
-        "rank": 14,
-        "of": 81,
-        "previous": 14
-      },
       "raised": {
         "rank": 30,
         "of": 55,
