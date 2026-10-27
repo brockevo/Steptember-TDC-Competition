@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-27T04:06:01.441Z",
+  "updated": "2026-10-27T11:46:26.182Z",
   "scope": "kpmg",
   "org": {
     "name": "KPMG"
@@ -78,7 +78,7 @@
       "raised": {
         "rank": 115,
         "of": 152,
-        "previous": 116
+        "previous": 115
       }
     },
     "timtaylor597740": {
@@ -90,7 +90,7 @@
       "raised": {
         "rank": 103,
         "of": 152,
-        "previous": 104
+        "previous": 103
       }
     },
     "emmacoggin": {
@@ -114,7 +114,7 @@
       "raised": {
         "rank": 65,
         "of": 152,
-        "previous": 66
+        "previous": 65
       }
     },
     "becmatthew": {
@@ -159,7 +159,7 @@
       "raised": {
         "rank": 113,
         "of": 152,
-        "previous": 114
+        "previous": 113
       }
     }
   }
